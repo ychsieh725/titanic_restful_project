@@ -20,10 +20,8 @@ from src.ml.registry import (
     list_models,
     set_active_model,
 )
-from src.ml.types import Job, JobStatus, ModelMetadata, PassengerInput
-
-# 單筆預測必填欄位（其餘可空，由共用管線補值）。
-_REQUIRED_PASSENGER_FIELDS = ("Pclass", "Sex", "SibSp", "Parch", "Name", "Ticket")
+from src.ml.types import Job, JobStatus, ModelMetadata
+from src.ml.validation import ValidationError, validate_passenger
 
 
 def create_ml_blueprint(
@@ -90,14 +88,14 @@ def create_ml_blueprint(
     @blueprint.post("/predict")
     def predict():
         data = request.get_json(silent=True)
-        if not data:
-            return jsonify({"error": "請提供乘客資料（JSON）"}), 400
+        if not isinstance(data, dict):
+            return jsonify({"error": "請提供乘客資料（JSON 物件）"}), 400
 
-        missing = [f for f in _REQUIRED_PASSENGER_FIELDS if data.get(f) is None]
-        if missing:
-            return jsonify({"error": f"缺少必填欄位：{', '.join(missing)}"}), 400
+        try:
+            passenger = validate_passenger(data)
+        except ValidationError as exc:
+            return jsonify({"error": str(exc), "fields": exc.errors}), 422
 
-        passenger = _build_passenger(data)
         try:
             result = predict_one(passenger, db_path=db_path)
         except NoActiveModelError as exc:
@@ -131,25 +129,6 @@ def _job_payload(job: Job, db_path: str | None) -> dict:
             }
 
     return payload
-
-
-def _build_passenger(data: dict) -> PassengerInput:
-    """由請求 JSON 組 PassengerInput；必填欄位已於路由先行驗證。
-
-    可空欄位（Age/Fare/Cabin/Embarked）缺漏時帶 None，交由共用管線補值（CON-2）。
-    """
-    return PassengerInput(
-        Pclass=data["Pclass"],
-        Sex=data["Sex"],
-        SibSp=data["SibSp"],
-        Parch=data["Parch"],
-        Name=data["Name"],
-        Ticket=data["Ticket"],
-        Age=data.get("Age"),
-        Fare=data.get("Fare"),
-        Cabin=data.get("Cabin"),
-        Embarked=data.get("Embarked"),
-    )
 
 
 def _metadata_payload(metadata: ModelMetadata) -> dict:

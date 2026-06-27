@@ -250,13 +250,23 @@ def test_predict_missing_body_returns_400(seeded_db) -> None:
     assert response.status_code == 400
 
 
-def test_predict_missing_required_field_returns_400(seeded_db) -> None:
+def test_predict_missing_required_field_returns_422(seeded_db) -> None:
     db_path, models_dir = seeded_db
     client = _make_client(db_path, models_dir)
     payload = {k: v for k, v in _VALID_PASSENGER.items() if k != "Sex"}
     response = client.post("/api/ml/predict", json=payload)
-    assert response.status_code == 400
-    assert "Sex" in response.get_json()["error"]
+    assert response.status_code == 422
+    assert "Sex" in response.get_json()["fields"]
+
+
+def test_predict_invalid_value_returns_422_with_fields(seeded_db) -> None:
+    db_path, models_dir = seeded_db
+    client = _make_client(db_path, models_dir)
+    payload = {**_VALID_PASSENGER, "Pclass": 9, "Embarked": "Z"}
+    response = client.post("/api/ml/predict", json=payload)
+    assert response.status_code == 422
+    fields = response.get_json()["fields"]
+    assert "Pclass" in fields and "Embarked" in fields
 
 
 def test_predict_without_active_model_returns_409(seeded_db) -> None:

@@ -100,6 +100,27 @@ CATEGORICAL_FEATURES: tuple[str, ...] = (
     "Title",
 )
 
+# --- 輸入驗證規則（FR-5.5 / 對齊 init_db CHECK 約束）----------------------
+
+# 單筆預測必填欄位；其餘可空，由共用管線補值。
+REQUIRED_PASSENGER_FIELDS: tuple[str, ...] = (
+    "Pclass",
+    "Sex",
+    "SibSp",
+    "Parch",
+    "Name",
+    "Ticket",
+)
+
+VALID_PCLASS: tuple[int, ...] = (1, 2, 3)
+VALID_SEX: tuple[str, ...] = ("male", "female")
+VALID_EMBARKED: tuple[str, ...] = ("C", "Q", "S")
+
+AGE_MIN, AGE_MAX = 0.0, 120.0
+NAME_MAX_LEN = 100
+TICKET_MAX_LEN = 30
+CABIN_MAX_LEN = 30
+
 # --- 路徑 -----------------------------------------------------------------
 
 # 專案根目錄（src/ml/config.py → 上溯三層）

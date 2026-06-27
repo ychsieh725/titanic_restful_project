@@ -23,9 +23,10 @@ from . import (
     schema,
     training,
     types,
+    validation,
 )
 
 __all__ = [
     "config", "features", "jobs", "prediction", "registry", "schema",
-    "training", "types",
+    "training", "types", "validation",
 ]
