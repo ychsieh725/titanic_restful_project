@@ -1,9 +1,9 @@
 # 開發進度紀錄 — Titanic ML 平台
 
 > **分支:** `feat/ml-platform`
-> **最後更新:** 2026-06-27 15:56
-> **狀態:** M1 訓練流程就緒（特徵 → 訓練 → 非同步 job → 持久化），待 4.3 訓練 API
-> **測試總計:** 40 passed / 覆蓋率 99%
+> **最後更新:** 2026-06-27 16:06
+> **狀態:** ✅ M1 達成（特徵 → 訓練 → 非同步 job → 持久化 → 訓練 API）；下一階段 M2 預測
+> **測試總計:** 47 passed / 覆蓋率 99%
 > **開發流程:** `/task-next → /plan → /tdd → /verify`，每任務 TDD（RED→GREEN）+ 獨立 commit
 
 ---
@@ -12,7 +12,7 @@
 
 | 里程碑 | 目標 | 狀態 |
 |---|---|---|
-| M1 核心管線可訓練 | 一鍵訓練 + 超參數 + 模型儲存 | 🔄 訓練流程完成（4.3 API 未做） |
+| M1 核心管線可訓練 | 一鍵訓練 + 超參數 + 模型儲存 | ✅ 完成 |
 | M2 預測可用 | 單筆 + CSV 批次預測 | ⏳ 未開始 |
 | M3 MVP 驗收 | UI 串接 + 6 大必做驗收 | ⏳ 未開始 |
 
@@ -27,7 +27,7 @@
 | 2.3 | DB schema（ml_model + train_job） | ✅ | `0404e02` |
 | 5.1 | 模型持久化 + metadata 寫入 | ✅ | `8ccc52c` |
 | 4.2 | 非同步 job（threading） | ✅ | `495ffe5` |
-| 4.3 | 訓練 API | ⏳ | — |
+| 4.3 | 訓練 API（POST train / GET status） | ✅ | (本次) |
 | 5.2 | 模型清單 + active 切換 | ⏳ | — |
 | 6.x | 單筆 / CSV 批次預測 | ⏳ | — |
 | 7.x / 8.x | UI / 整合測試 / 驗收 | ⏳ | — |
@@ -106,9 +106,20 @@
   - 先驗證演算法，未知時同步拋 ValueError 且不建 job（讓 API 取得明確錯誤）
 - 既有 `JobStore`（2.2）：thread-safe、不可變狀態轉移（replace 產生新 Job 快照）
 
+### 4.3 訓練 API — `src/web/ml_api.py`（新增展示層 package）
+
+**對應需求:** SRS §4.2 / FR-3.7~3.9
+
+- `create_ml_blueprint(store, db_path, models_dir)`：blueprint 工廠，依賴注入便於測試
+- `POST /api/ml/train`：缺 body/欄位 → 400；未知演算法 → 422；成功 → 202 + job_id
+- `GET /api/ml/train/status/<job_id>`：不存在 → 404；存在 → 200，done 時附
+  `result.{best_params, best_cv_score, metrics}`（FR-3.8）
+- **分層**：blueprint 屬展示層（可 import flask + src.ml），`src/ml/` 維持
+  框架無關（CON-4）；`app.py` 以 register_blueprint 掛載
+
 ---
 
-## 5. 測試細節（40 passed）
+## 5. 測試細節（47 passed）
 
 | 測試檔 | 數量 | 覆蓋重點 |
 |---|---|---|
@@ -117,6 +128,7 @@
 | `tests/test_schema.py` | 7 | 建表、欄位齊全（PRAGMA 比對）、冪等、**單一 active 約束（IntegrityError）**、status CHECK |
 | `tests/test_registry.py` | 7 | joblib 檔+DB 列、JSON 欄往返、預設 inactive、載回可預測、uid 查詢、UNIQUE(model_uid) 約束 |
 | `tests/test_jobs.py` | 7 | JobStore create/get/list 排序/`_transition` KeyError、**run_training 成功 done**、**失敗 failed 不中斷（NFR-R1）**、start_training_job 立即回傳並完成、未知演算法 ValueError 不建 job |
+| `tests/test_ml_api.py` | 7 | POST 缺 body/欄位→400、未知演算法→422、合法→202+job_id、status 未知→404、**完成含指標摘要**、**失敗→failed**（Flask test client + 注入 tmp DB） |
 
 **測試策略**
 - 全程 TDD：先寫失敗測試（RED）→ 最小實作（GREEN）→ 重構
@@ -133,8 +145,9 @@
 | `src/ml/registry.py` | 41 | 0 | **100%** | |
 | `src/ml/jobs.py` | 59 | 0 | **100%** | 4.2 補滿（原 50%） |
 | `src/ml/types.py` | 70 | 0 | **100%** | |
+| `src/web/ml_api.py` | 33 | 0 | **100%** | 4.3 訓練 API |
 | `src/ml/config.py` | 26 | 2 | 92% | 未覆蓋：`get_param_grid` 冗餘錯誤分支 |
-| **TOTAL** | **321** | **2** | **99%** | 門檻 80% ✅ |
+| **TOTAL** | **354** | **2** | **99%** | 門檻 80% ✅ |
 
 ### 已知警告（非專案程式碼）
 - 3× `DeprecationWarning`（NumPy 2.5 shape API），來自 joblib 內部序列化，不影響功能。
@@ -146,7 +159,7 @@
 | 約束 | 狀態 | 驗證方式 |
 |---|---|---|
 | CON-2 共用序列化管線 | ✅ | 存/載皆整條 pipeline；單筆==批次、joblib 往返測試 |
-| CON-4 服務層框架解耦 | ✅ | `src/ml/` 無 import flask（grep 驗證） |
+| CON-4 服務層框架解耦 | ✅ | `src/ml/` 無 import flask；展示層獨立於 `src/web/`（grep 驗證） |
 | CON-3 模型持久化 | ✅ | joblib 存模型、metadata 入 ml_model 表 |
 | NFR-S2 參數化查詢 | ✅ | 所有 SQL 用 `?` 佔位，無字串拼接 |
 | testing 80%+ | ✅ | 93% |
@@ -157,6 +170,6 @@
 
 | 順序 | 任務 | 依賴 | 說明 |
 |---|---|---|---|
-| 1 | **4.3 訓練 API** | 4.2 ✅ | POST /api/ml/train（呼叫 start_training_job）、GET /train/status/{job_id} |
-| 2 | 5.2 模型清單 + active 切換 | 5.1 ✅ | 完成後預測端可取 active 模型 |
-| 3 | 6.x 單筆 / CSV 批次預測 | 5.x | M2 |
+| 1 | **5.2 模型清單 + active 切換** | 5.1 ✅ | GET /api/ml/models、POST /models/{id}/activate；預測端取 active 模型 |
+| 2 | 6.1 單筆預測 + API | 5.1 ✅ | predict_proba 機率（M2） |
+| 3 | 6.2 / 6.3 批次預測 + 輸入驗證 | 6.1 | M2 |

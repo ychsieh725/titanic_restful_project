@@ -1,7 +1,13 @@
 import sqlite3
 from flask import Flask, jsonify, request, render_template
 
+from src.web.ml_api import create_ml_blueprint
+
 app = Flask(__name__)
+
+# 掛載 ML 平台 API（訓練 job 等）。展示層 glue 位於 src/web/，
+# 服務層 src/ml/ 維持框架無關（CON-4）。預設使用全域 DATABASE 與設定路徑。
+app.register_blueprint(create_ml_blueprint())
 
 # ============================================================
 # 1. 全域讀取資料庫
