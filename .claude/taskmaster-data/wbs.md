@@ -1,7 +1,7 @@
 # WBS - Titanic 生存預測機器學習平台
 
 **建立日期:** 2026-06-27
-**最後更新:** 2026-06-27（4.3 訓練 API 完成 → M1 達成）
+**最後更新:** 2026-06-27（5.2 模型清單/active 切換 完成；M2 進行中）
 **開發模式:** MVP（SRS 必做需求 / Must）
 **主要語言:** Python 3.11+ / Flask / scikit-learn
 **專案描述:** 在現有 Flask CRUD（titanic 表）之上，擴充端到端 ML 平台：共用特徵工程管線、一鍵訓練+超參數調校、非同步 job 狀態查詢、模型持久化與 Registry、單筆/CSV 批次預測（含生存機率）。
@@ -26,7 +26,7 @@
 | 4.2 | 非同步 job（threading）+ 狀態管理 pending/running/done/failed | ✅ 完成 | 高 | 4.1 | 2h | FR-3.7~3.9, NFR-R1 |
 | 4.3 | 訓練 API：POST /api/ml/train、GET /train/status/{job_id} | ✅ 完成 | 高 | 4.2 | 1.5h | §4.2 API |
 | 5.1 | 模型持久化（joblib 整條管線）+ metadata 寫入 ml_model | ✅ 完成 | 高 | 4.1, 2.3 | 2h | FR-4.1, 4.2 |
-| 5.2 | 模型清單 API + active 模型切換 | ⏳ 待處理 | 高 | 5.1 | 1.5h | FR-4.3, 4.5（預測用 active） |
+| 5.2 | 模型清單 API + active 模型切換 | ✅ 完成 | 高 | 5.1 | 1.5h | FR-4.3, 4.5（預測用 active） |
 | 6.1 | 單筆預測服務 + API（predict_proba 機率） | ⏳ 待處理 | 高 | 5.1 | 2h | FR-5.1, 5.2 |
 | 6.2 | CSV 批次預測 + 結果 CSV 下載 | ⏳ 待處理 | 高 | 6.1 | 2h | FR-5.3, 5.4 |
 | 6.3 | 輸入驗證（schema-based，明確錯誤訊息，不回 500） | ⏳ 待處理 | 高 | 6.1 | 1.5h | FR-5.5, NFR-S1/S2 |

@@ -1,9 +1,9 @@
 # 開發進度紀錄 — Titanic ML 平台
 
 > **分支:** `feat/ml-platform`
-> **最後更新:** 2026-06-27 16:06
-> **狀態:** ✅ M1 達成（特徵 → 訓練 → 非同步 job → 持久化 → 訓練 API）；下一階段 M2 預測
-> **測試總計:** 47 passed / 覆蓋率 99%
+> **最後更新:** 2026-06-27 16:16
+> **狀態:** ✅ M1 達成；M2 進行中（5.2 模型清單/active 切換完成，待 6.x 預測）
+> **測試總計:** 56 passed / 覆蓋率 99%
 > **開發流程:** `/task-next → /plan → /tdd → /verify`，每任務 TDD（RED→GREEN）+ 獨立 commit
 
 ---
@@ -13,7 +13,7 @@
 | 里程碑 | 目標 | 狀態 |
 |---|---|---|
 | M1 核心管線可訓練 | 一鍵訓練 + 超參數 + 模型儲存 | ✅ 完成 |
-| M2 預測可用 | 單筆 + CSV 批次預測 | ⏳ 未開始 |
+| M2 預測可用 | 單筆 + CSV 批次預測 | 🔄 進行中（5.2 完成，6.x 未做） |
 | M3 MVP 驗收 | UI 串接 + 6 大必做驗收 | ⏳ 未開始 |
 
 ## 2. 任務完成總覽
@@ -27,7 +27,8 @@
 | 2.3 | DB schema（ml_model + train_job） | ✅ | `0404e02` |
 | 5.1 | 模型持久化 + metadata 寫入 | ✅ | `8ccc52c` |
 | 4.2 | 非同步 job（threading） | ✅ | `495ffe5` |
-| 4.3 | 訓練 API（POST train / GET status） | ✅ | (本次) |
+| 4.3 | 訓練 API（POST train / GET status） | ✅ | `a356094` |
+| 5.2 | 模型清單 + active 切換 API | ✅ | (本次) |
 | 5.2 | 模型清單 + active 切換 | ⏳ | — |
 | 6.x | 單筆 / CSV 批次預測 | ⏳ | — |
 | 7.x / 8.x | UI / 整合測試 / 驗收 | ⏳ | — |
@@ -117,18 +118,29 @@
 - **分層**：blueprint 屬展示層（可 import flask + src.ml），`src/ml/` 維持
   框架無關（CON-4）；`app.py` 以 register_blueprint 掛載
 
+### 5.2 模型清單 + active 切換 — `src/ml/registry.py` + `src/web/ml_api.py`
+
+**對應需求:** FR-4.3, 4.4, 4.5
+
+- registry：`list_models()`（新→舊）、`get_active_model()`（供 6.x 預測）、
+  `set_active_model(id)`（單一交易內先清後設，避免 partial unique index 衝突；
+  不存在回 None）
+- API：`GET /api/ml/models` → 200 清單；`POST /api/ml/models/<id>/activate`
+  → 200 / 不存在 404；`_metadata_payload` 序列化（datetime → isoformat）
+- **至多一個 active** 由 DB 的 partial unique index + 交易順序共同保證
+
 ---
 
-## 5. 測試細節（47 passed）
+## 5. 測試細節（56 passed）
 
 | 測試檔 | 數量 | 覆蓋重點 |
 |---|---|---|
 | `tests/test_features.py` | 10 | Title 萃取/歸併、FamilySize/IsAlone、補值無 NaN、**單筆==批次一致性**、**joblib 往返不變**、未見類別韌性、PassengerInput 轉換 |
 | `tests/test_training.py` | 9 | LR/RF 訓練、best_params `clf__` 前綴、指標邊界 [0,1]、混淆矩陣 2×2、**可重現性**、joblib 往返可預測、未知演算法 ValueError、DB 載入整合 |
 | `tests/test_schema.py` | 7 | 建表、欄位齊全（PRAGMA 比對）、冪等、**單一 active 約束（IntegrityError）**、status CHECK |
-| `tests/test_registry.py` | 7 | joblib 檔+DB 列、JSON 欄往返、預設 inactive、載回可預測、uid 查詢、UNIQUE(model_uid) 約束 |
+| `tests/test_registry.py` | 12 | joblib 檔+DB 列、JSON 欄往返、預設 inactive、載回可預測、uid 查詢、UNIQUE(model_uid) 約束、**清單排序、active 切換唯一性、get_active** |
 | `tests/test_jobs.py` | 7 | JobStore create/get/list 排序/`_transition` KeyError、**run_training 成功 done**、**失敗 failed 不中斷（NFR-R1）**、start_training_job 立即回傳並完成、未知演算法 ValueError 不建 job |
-| `tests/test_ml_api.py` | 7 | POST 缺 body/欄位→400、未知演算法→422、合法→202+job_id、status 未知→404、**完成含指標摘要**、**失敗→failed**（Flask test client + 注入 tmp DB） |
+| `tests/test_ml_api.py` | 11 | POST 缺 body/欄位→400、未知演算法→422、合法→202+job_id、status 未知→404、**完成含指標摘要**、**失敗→failed**、**模型清單、activate→200、不存在→404、切換唯一 active**（Flask test client + 注入 tmp DB） |
 
 **測試策略**
 - 全程 TDD：先寫失敗測試（RED）→ 最小實作（GREEN）→ 重構
@@ -142,12 +154,12 @@
 | `src/ml/features.py` | 53 | 0 | **100%** | |
 | `src/ml/training.py` | 55 | 0 | **100%** | |
 | `src/ml/schema.py` | 15 | 0 | **100%** | |
-| `src/ml/registry.py` | 41 | 0 | **100%** | |
+| `src/ml/registry.py` | 73 | 0 | **100%** | 含 5.2 清單/active |
 | `src/ml/jobs.py` | 59 | 0 | **100%** | 4.2 補滿（原 50%） |
 | `src/ml/types.py` | 70 | 0 | **100%** | |
-| `src/web/ml_api.py` | 33 | 0 | **100%** | 4.3 訓練 API |
+| `src/web/ml_api.py` | 45 | 0 | **100%** | 4.3 + 5.2 API |
 | `src/ml/config.py` | 26 | 2 | 92% | 未覆蓋：`get_param_grid` 冗餘錯誤分支 |
-| **TOTAL** | **354** | **2** | **99%** | 門檻 80% ✅ |
+| **TOTAL** | **398** | **2** | **99%** | 門檻 80% ✅ |
 
 ### 已知警告（非專案程式碼）
 - 3× `DeprecationWarning`（NumPy 2.5 shape API），來自 joblib 內部序列化，不影響功能。
@@ -170,6 +182,6 @@
 
 | 順序 | 任務 | 依賴 | 說明 |
 |---|---|---|---|
-| 1 | **5.2 模型清單 + active 切換** | 5.1 ✅ | GET /api/ml/models、POST /models/{id}/activate；預測端取 active 模型 |
-| 2 | 6.1 單筆預測 + API | 5.1 ✅ | predict_proba 機率（M2） |
-| 3 | 6.2 / 6.3 批次預測 + 輸入驗證 | 6.1 | M2 |
+| 1 | **6.1 單筆預測 + API** | 5.1 ✅ | get_active_model + predict_proba 機率；無 active → 提示（FR-4.5/5.2） |
+| 2 | 6.3 輸入驗證 | 6.1 | schema-based，明確錯誤不回 500（FR-5.5, NFR-S1/S2） |
+| 3 | 6.2 CSV 批次預測 + 下載 | 6.1 | FR-5.3, 5.4（M2） |

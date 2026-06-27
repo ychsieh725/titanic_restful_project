@@ -152,3 +152,67 @@ def test_status_failure_returns_failed(tmp_path) -> None:
     body = _poll_status(client, job_id)
     assert body["status"] == "failed"
     assert body["error_message"]
+
+
+# --- 模型清單 / active 切換（5.2）----------------------------------------
+
+def _seed_model(db_path: str, uid: str, is_active: int = 0) -> int:
+    connection = sqlite3.connect(db_path)
+    try:
+        cursor = connection.execute(
+            """
+            INSERT INTO ml_model (
+                model_uid, algorithm, hyperparameters, best_cv_score, metrics,
+                feature_list, training_rows, data_hash, file_path,
+                training_duration_sec, is_active
+            ) VALUES (?, 'random_forest', '{}', 0.8, '{}', '[]', 100, 'h', 'p', 1.0, ?)
+            """,
+            (uid, is_active),
+        )
+        connection.commit()
+        return cursor.lastrowid
+    finally:
+        connection.close()
+
+
+def test_list_models_returns_seeded(seeded_db) -> None:
+    db_path, models_dir = seeded_db
+    _seed_model(db_path, "uid-1")
+    _seed_model(db_path, "uid-2")
+    client = _make_client(db_path, models_dir)
+
+    response = client.get("/api/ml/models")
+    assert response.status_code == 200
+    models = response.get_json()["models"]
+    assert {m["model_uid"] for m in models} == {"uid-1", "uid-2"}
+
+
+def test_activate_model_returns_200_and_marks_active(seeded_db) -> None:
+    db_path, models_dir = seeded_db
+    model_id = _seed_model(db_path, "uid-1")
+    client = _make_client(db_path, models_dir)
+
+    response = client.post(f"/api/ml/models/{model_id}/activate")
+    assert response.status_code == 200
+    assert response.get_json()["model"]["is_active"] is True
+
+
+def test_activate_missing_model_returns_404(seeded_db) -> None:
+    db_path, models_dir = seeded_db
+    client = _make_client(db_path, models_dir)
+    response = client.post("/api/ml/models/999/activate")
+    assert response.status_code == 404
+
+
+def test_activate_switches_active_model(seeded_db) -> None:
+    db_path, models_dir = seeded_db
+    id1 = _seed_model(db_path, "uid-1")
+    id2 = _seed_model(db_path, "uid-2")
+    client = _make_client(db_path, models_dir)
+
+    client.post(f"/api/ml/models/{id1}/activate")
+    client.post(f"/api/ml/models/{id2}/activate")
+
+    models = client.get("/api/ml/models").get_json()["models"]
+    actives = [m["id"] for m in models if m["is_active"]]
+    assert actives == [id2]

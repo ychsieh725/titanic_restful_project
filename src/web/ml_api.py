@@ -14,8 +14,12 @@ from pathlib import Path
 from flask import Blueprint, jsonify, request
 
 from src.ml.jobs import JobStore, job_store, start_training_job
-from src.ml.registry import get_model_by_uid
-from src.ml.types import Job, JobStatus
+from src.ml.registry import (
+    get_model_by_uid,
+    list_models,
+    set_active_model,
+)
+from src.ml.types import Job, JobStatus, ModelMetadata
 
 
 def create_ml_blueprint(
@@ -67,6 +71,18 @@ def create_ml_blueprint(
             return jsonify({"error": f"找不到 job：{job_id}"}), 404
         return jsonify(_job_payload(job, db_path)), 200
 
+    @blueprint.get("/models")
+    def models():
+        items = [_metadata_payload(m) for m in list_models(db_path=db_path)]
+        return jsonify({"models": items}), 200
+
+    @blueprint.post("/models/<int:model_id>/activate")
+    def activate_model(model_id: int):
+        metadata = set_active_model(model_id, db_path=db_path)
+        if metadata is None:
+            return jsonify({"error": f"找不到模型：{model_id}"}), 404
+        return jsonify({"model": _metadata_payload(metadata)}), 200
+
     return blueprint
 
 
@@ -91,3 +107,22 @@ def _job_payload(job: Job, db_path: str | None) -> dict:
             }
 
     return payload
+
+
+def _metadata_payload(metadata: ModelMetadata) -> dict:
+    """序列化 ModelMetadata 為 JSON-friendly dict（datetime → isoformat）。"""
+    return {
+        "id": metadata.id,
+        "model_uid": metadata.model_uid,
+        "algorithm": metadata.algorithm,
+        "hyperparameters": metadata.hyperparameters,
+        "best_cv_score": metadata.best_cv_score,
+        "metrics": metadata.metrics,
+        "feature_list": metadata.feature_list,
+        "training_rows": metadata.training_rows,
+        "data_hash": metadata.data_hash,
+        "file_path": metadata.file_path,
+        "training_duration_sec": metadata.training_duration_sec,
+        "is_active": metadata.is_active,
+        "created_at": metadata.created_at.isoformat(),
+    }

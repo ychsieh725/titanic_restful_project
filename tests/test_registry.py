@@ -13,7 +13,14 @@ import pandas as pd
 import pytest
 
 from src.ml import config
-from src.ml.registry import get_model_by_uid, load_model_file, save_model
+from src.ml.registry import (
+    get_active_model,
+    get_model_by_uid,
+    list_models,
+    load_model_file,
+    save_model,
+    set_active_model,
+)
 from src.ml.schema import init_ml_schema
 from src.ml.training import train_model
 from src.ml.types import ModelMetadata
@@ -125,3 +132,67 @@ def test_duplicate_model_uid_rejected(trained) -> None:
     save_model(pipeline, result, db_path=db_path, models_dir=models_dir)
     with pytest.raises(sqlite3.IntegrityError):
         save_model(pipeline, result, db_path=db_path, models_dir=models_dir)
+
+
+# --- 清單 / active 切換（5.2）-------------------------------------------
+
+@pytest.fixture
+def empty_db(tmp_path) -> str:
+    db_path = str(tmp_path / "ml.db")
+    init_ml_schema(db_path)
+    return db_path
+
+
+def _seed_model(db_path: str, uid: str, is_active: int = 0) -> int:
+    connection = sqlite3.connect(db_path)
+    try:
+        cursor = connection.execute(
+            """
+            INSERT INTO ml_model (
+                model_uid, algorithm, hyperparameters, best_cv_score, metrics,
+                feature_list, training_rows, data_hash, file_path,
+                training_duration_sec, is_active
+            ) VALUES (?, 'random_forest', '{}', 0.8, '{}', '[]', 100, 'h', 'p', 1.0, ?)
+            """,
+            (uid, is_active),
+        )
+        connection.commit()
+        return cursor.lastrowid
+    finally:
+        connection.close()
+
+
+def test_list_models_empty(empty_db: str) -> None:
+    assert list_models(db_path=empty_db) == []
+
+
+def test_list_models_newest_first(empty_db: str) -> None:
+    _seed_model(empty_db, "uid-1")
+    _seed_model(empty_db, "uid-2")
+    models = list_models(db_path=empty_db)
+    assert [m.model_uid for m in models] == ["uid-2", "uid-1"]
+
+
+def test_set_active_model_marks_single_active(empty_db: str) -> None:
+    id1 = _seed_model(empty_db, "uid-1")
+    id2 = _seed_model(empty_db, "uid-2")
+
+    activated = set_active_model(id1, db_path=empty_db)
+    assert activated is not None and activated.is_active is True
+
+    # 切換到另一個 → 只有後者 active
+    set_active_model(id2, db_path=empty_db)
+    actives = [m.id for m in list_models(db_path=empty_db) if m.is_active]
+    assert actives == [id2]
+
+
+def test_set_active_model_missing_returns_none(empty_db: str) -> None:
+    assert set_active_model(999, db_path=empty_db) is None
+
+
+def test_get_active_model(empty_db: str) -> None:
+    assert get_active_model(db_path=empty_db) is None
+    model_id = _seed_model(empty_db, "uid-1")
+    set_active_model(model_id, db_path=empty_db)
+    active = get_active_model(db_path=empty_db)
+    assert active is not None and active.id == model_id

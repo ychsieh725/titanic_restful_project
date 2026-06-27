@@ -33,6 +33,8 @@ INSERT INTO ml_model (
 
 _SELECT_BY_ID_SQL = "SELECT * FROM ml_model WHERE id = ?"
 _SELECT_BY_UID_SQL = "SELECT * FROM ml_model WHERE model_uid = ?"
+_SELECT_ALL_SQL = "SELECT * FROM ml_model ORDER BY created_at DESC, id DESC"
+_SELECT_ACTIVE_SQL = "SELECT * FROM ml_model WHERE is_active = 1"
 
 
 def save_model(
@@ -105,6 +107,57 @@ def get_model_by_uid(
 def load_model_file(metadata: ModelMetadata) -> Pipeline:
     """依 metadata.file_path 載回整條 pipeline（供預測共用，CON-2）。"""
     return joblib.load(metadata.file_path)
+
+
+def list_models(db_path: str | None = None) -> list[ModelMetadata]:
+    """列出所有登錄模型，建立時間新→舊（FR-4.3）。"""
+    path = str(db_path or config.DATABASE_PATH)
+    connection = sqlite3.connect(path)
+    connection.row_factory = sqlite3.Row
+    try:
+        rows = connection.execute(_SELECT_ALL_SQL).fetchall()
+    finally:
+        connection.close()
+    return [_row_to_metadata(row) for row in rows]
+
+
+def get_active_model(db_path: str | None = None) -> Optional[ModelMetadata]:
+    """取得 active 模型；無則回 None（供預測判斷，FR-4.5）。"""
+    path = str(db_path or config.DATABASE_PATH)
+    connection = sqlite3.connect(path)
+    connection.row_factory = sqlite3.Row
+    try:
+        row = connection.execute(_SELECT_ACTIVE_SQL).fetchone()
+    finally:
+        connection.close()
+    return _row_to_metadata(row) if row is not None else None
+
+
+def set_active_model(
+    model_id: int,
+    db_path: str | None = None,
+) -> Optional[ModelMetadata]:
+    """將指定模型設為 active，同時間至多一個（FR-4.4）。
+
+    於單一交易內先清除既有 active 再設定目標，避免 partial unique index
+    在「新舊皆為 active」瞬間衝突。目標不存在時回 None（不變更任何資料）。
+    """
+    path = str(db_path or config.DATABASE_PATH)
+    connection = sqlite3.connect(path)
+    connection.row_factory = sqlite3.Row
+    try:
+        exists = connection.execute(_SELECT_BY_ID_SQL, (model_id,)).fetchone()
+        if exists is None:
+            return None
+        with connection:  # 交易：全成功才提交
+            connection.execute("UPDATE ml_model SET is_active = 0 WHERE is_active = 1")
+            connection.execute(
+                "UPDATE ml_model SET is_active = 1 WHERE id = ?", (model_id,)
+            )
+        row = connection.execute(_SELECT_BY_ID_SQL, (model_id,)).fetchone()
+    finally:
+        connection.close()
+    return _row_to_metadata(row)
 
 
 def _row_to_metadata(row: sqlite3.Row) -> ModelMetadata:
