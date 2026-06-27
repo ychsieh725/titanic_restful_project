@@ -57,6 +57,42 @@ RAW_FEATURE_COLUMNS: tuple[str, ...] = (
     "Name",
 )
 
+# --- 特徵工程設定（SRS §3.2 FR-2 / NFR-M2 集中設定）----------------------
+
+# 自 Name 萃取 Title 的正則：抓 "," 之後、"." 之前的頭銜詞（FR-2.3）。
+# 例："Braund, Mr. Owen Harris" -> "Mr"
+TITLE_REGEX = r",\s*([^\.]+)\."
+
+# 稀有頭銜歸併對應（FR-2.3）。表內為標準四類；未列出者一律歸 "Rare"。
+# 法/英文同義頭銜（Mlle/Ms→Miss、Mme→Mrs）顯式對應，其餘職銜歸 Rare。
+TITLE_MAPPING: dict[str, str] = {
+    "Mr": "Mr",
+    "Mrs": "Mrs",
+    "Miss": "Miss",
+    "Master": "Master",
+    "Mlle": "Miss",
+    "Ms": "Miss",
+    "Mme": "Mrs",
+}
+TITLE_RARE = "Rare"
+
+# 經 TitanicFeatureEngineer.transform 後，進入編碼器的特徵欄位分組。
+# 數值欄走 StandardScaler，類別欄走 OneHotEncoder(handle_unknown="ignore")。
+NUMERIC_FEATURES: tuple[str, ...] = (
+    "Pclass",
+    "Age",
+    "SibSp",
+    "Parch",
+    "Fare",
+    "FamilySize",
+    "IsAlone",
+)
+CATEGORICAL_FEATURES: tuple[str, ...] = (
+    "Sex",
+    "Embarked",
+    "Title",
+)
+
 # --- 路徑 -----------------------------------------------------------------
 
 # 專案根目錄（src/ml/config.py → 上溯三層）
