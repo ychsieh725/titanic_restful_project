@@ -71,6 +71,10 @@ class TitanicFeatureEngineer(BaseEstimator, TransformerMixin):
         columns = [*config.NUMERIC_FEATURES, *config.CATEGORICAL_FEATURES]
         return engineered[columns]
 
+    def get_feature_names_out(self, input_features=None) -> list[str]:
+        """輸出欄位名稱，使整條 Pipeline 可鏈接 get_feature_names_out。"""
+        return [*config.NUMERIC_FEATURES, *config.CATEGORICAL_FEATURES]
+
     # --- 內部：純衍生（不含補值），fit/transform 共用 --------------------
 
     def _engineer(self, X: pd.DataFrame) -> pd.DataFrame:

@@ -14,6 +14,6 @@
 - prediction  單筆 / 批次預測（任務 6.1）
 """
 
-from . import config, features, jobs, types
+from . import config, features, jobs, training, types
 
-__all__ = ["config", "features", "jobs", "types"]
+__all__ = ["config", "features", "jobs", "training", "types"]

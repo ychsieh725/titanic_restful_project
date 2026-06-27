@@ -39,6 +39,13 @@ CV_FOLDS = 5          # 交叉驗證折數，需 >= 5
 TEST_SIZE = 0.2       # held-out 測試集比例
 RANDOM_STATE = 42     # 可重現性
 
+# GridSearchCV 平行度（NFR-P1）。-1 用滿核心；4.2 在 threading job 內可調為 1
+# 以避免 loky 巢狀平行的資源競爭。集中於此便於調整（NFR-M2）。
+N_JOBS = -1
+
+# LogisticRegression 最大迭代數，設足夠大以避免縮放後仍不收斂警告（FR-3.2）。
+LR_MAX_ITER = 1000
+
 # --- 資料欄位（SRS §6.1）--------------------------------------------------
 
 TARGET_COLUMN = "Survived"
