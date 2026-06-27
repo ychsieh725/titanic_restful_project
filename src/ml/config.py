@@ -1,0 +1,89 @@
+"""服務層集中設定（NFR-M2）。
+
+超參數格點、特徵清單、CV 設定與路徑集中於此，便於調整且避免散落硬編碼。
+數值來源：SRS §10.1 建議超參數格點、§6.1 資料字典。
+"""
+
+from __future__ import annotations
+
+from pathlib import Path
+
+# --- 演算法 ---------------------------------------------------------------
+
+LOGISTIC_REGRESSION = "logistic_regression"
+RANDOM_FOREST = "random_forest"
+
+SUPPORTED_ALGORITHMS: tuple[str, ...] = (LOGISTIC_REGRESSION, RANDOM_FOREST)
+
+# --- 超參數格點（SRS §10.1）-----------------------------------------------
+# 鍵以 "clf__" 前綴對應 sklearn Pipeline 中分類器步驟名稱 "clf"，
+# 供 GridSearchCV 直接使用。
+
+PARAM_GRIDS: dict[str, dict[str, list]] = {
+    LOGISTIC_REGRESSION: {
+        "clf__C": [0.01, 0.1, 1, 10],
+        "clf__penalty": ["l1", "l2"],
+        "clf__solver": ["liblinear"],
+    },
+    RANDOM_FOREST: {
+        "clf__n_estimators": [100, 300, 500],
+        "clf__max_depth": [None, 5, 10, 20],
+        "clf__min_samples_split": [2, 5, 10],
+        "clf__min_samples_leaf": [1, 2, 4],
+    },
+}
+
+# --- 訓練設定（FR-3.3 / FR-3.6 / FR-3.10）---------------------------------
+
+CV_FOLDS = 5          # 交叉驗證折數，需 >= 5
+TEST_SIZE = 0.2       # held-out 測試集比例
+RANDOM_STATE = 42     # 可重現性
+
+# --- 資料欄位（SRS §6.1）--------------------------------------------------
+
+TARGET_COLUMN = "Survived"
+
+# 從 titanic 表載入、進入特徵管線前的原始輸入欄位
+RAW_FEATURE_COLUMNS: tuple[str, ...] = (
+    "Pclass",
+    "Sex",
+    "Age",
+    "SibSp",
+    "Parch",
+    "Ticket",
+    "Fare",
+    "Cabin",
+    "Embarked",
+    "Name",
+)
+
+# --- 路徑 -----------------------------------------------------------------
+
+# 專案根目錄（src/ml/config.py → 上溯三層）
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+
+# joblib 模型檔儲存目錄（CON-3 / FR-4.1）；已列入 .gitignore
+MODELS_DIR = PROJECT_ROOT / "models"
+
+# SQLite 資料庫（與 app.py 一致）
+DATABASE_PATH = PROJECT_ROOT / "my_db.db"
+
+
+def get_param_grid(algorithm: str) -> dict[str, list]:
+    """取得指定演算法的超參數格點。
+
+    Args:
+        algorithm: 演算法名稱，需為 SUPPORTED_ALGORITHMS 之一。
+
+    Returns:
+        對應的超參數格點。
+
+    Raises:
+        ValueError: 演算法不在支援清單時，明確指出可用選項。
+    """
+    if algorithm not in PARAM_GRIDS:
+        supported = ", ".join(SUPPORTED_ALGORITHMS)
+        raise ValueError(
+            f"不支援的演算法 '{algorithm}'，可用選項：{supported}"
+        )
+    return PARAM_GRIDS[algorithm]

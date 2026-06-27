@@ -1,0 +1,19 @@
+# 資料庫
+*.db
+
+# uv / 虛擬環境
+.venv/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# 模型檔（joblib 產物，不進版控）
+models/
+
+# 環境變數
+.env

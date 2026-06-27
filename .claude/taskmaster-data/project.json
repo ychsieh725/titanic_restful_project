@@ -1,0 +1,15 @@
+{
+  "name": "Titanic 生存預測機器學習平台",
+  "created": "2026-06-27",
+  "mode": "MVP",
+  "language": "Python",
+  "framework": "Flask",
+  "stack": ["Flask", "scikit-learn", "pandas", "joblib", "SQLite"],
+  "packageManager": "uv",
+  "pythonVersion": ">=3.11",
+  "async": "threading",
+  "github": "skip",
+  "structure": "standard",
+  "wbsFile": ".claude/taskmaster-data/wbs.md",
+  "srsFile": "Titanic_ML_SRS.md"
+}
