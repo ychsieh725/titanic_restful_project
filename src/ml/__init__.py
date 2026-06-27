@@ -14,8 +14,18 @@
 - prediction  單筆 / 批次預測（任務 6.1）
 """
 
-from . import config, features, jobs, registry, schema, training, types
+from . import (
+    config,
+    features,
+    jobs,
+    prediction,
+    registry,
+    schema,
+    training,
+    types,
+)
 
 __all__ = [
-    "config", "features", "jobs", "registry", "schema", "training", "types",
+    "config", "features", "jobs", "prediction", "registry", "schema",
+    "training", "types",
 ]

@@ -14,12 +14,16 @@ from pathlib import Path
 from flask import Blueprint, jsonify, request
 
 from src.ml.jobs import JobStore, job_store, start_training_job
+from src.ml.prediction import NoActiveModelError, predict_one
 from src.ml.registry import (
     get_model_by_uid,
     list_models,
     set_active_model,
 )
-from src.ml.types import Job, JobStatus, ModelMetadata
+from src.ml.types import Job, JobStatus, ModelMetadata, PassengerInput
+
+# 單筆預測必填欄位（其餘可空，由共用管線補值）。
+_REQUIRED_PASSENGER_FIELDS = ("Pclass", "Sex", "SibSp", "Parch", "Name", "Ticket")
 
 
 def create_ml_blueprint(
@@ -83,6 +87,26 @@ def create_ml_blueprint(
             return jsonify({"error": f"找不到模型：{model_id}"}), 404
         return jsonify({"model": _metadata_payload(metadata)}), 200
 
+    @blueprint.post("/predict")
+    def predict():
+        data = request.get_json(silent=True)
+        if not data:
+            return jsonify({"error": "請提供乘客資料（JSON）"}), 400
+
+        missing = [f for f in _REQUIRED_PASSENGER_FIELDS if data.get(f) is None]
+        if missing:
+            return jsonify({"error": f"缺少必填欄位：{', '.join(missing)}"}), 400
+
+        passenger = _build_passenger(data)
+        try:
+            result = predict_one(passenger, db_path=db_path)
+        except NoActiveModelError as exc:
+            return jsonify({"error": str(exc)}), 409
+
+        return jsonify(
+            {"survived": result.survived, "probability": result.probability}
+        ), 200
+
     return blueprint
 
 
@@ -107,6 +131,25 @@ def _job_payload(job: Job, db_path: str | None) -> dict:
             }
 
     return payload
+
+
+def _build_passenger(data: dict) -> PassengerInput:
+    """由請求 JSON 組 PassengerInput；必填欄位已於路由先行驗證。
+
+    可空欄位（Age/Fare/Cabin/Embarked）缺漏時帶 None，交由共用管線補值（CON-2）。
+    """
+    return PassengerInput(
+        Pclass=data["Pclass"],
+        Sex=data["Sex"],
+        SibSp=data["SibSp"],
+        Parch=data["Parch"],
+        Name=data["Name"],
+        Ticket=data["Ticket"],
+        Age=data.get("Age"),
+        Fare=data.get("Fare"),
+        Cabin=data.get("Cabin"),
+        Embarked=data.get("Embarked"),
+    )
 
 
 def _metadata_payload(metadata: ModelMetadata) -> dict:

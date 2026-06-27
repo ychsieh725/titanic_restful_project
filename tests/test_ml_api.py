@@ -17,7 +17,9 @@ from flask import Flask
 
 from src.ml import config
 from src.ml.jobs import JobStore
+from src.ml.registry import save_model, set_active_model
 from src.ml.schema import init_ml_schema
+from src.ml.training import train_model
 from src.web.ml_api import create_ml_blueprint
 
 
@@ -216,3 +218,62 @@ def test_activate_switches_active_model(seeded_db) -> None:
     models = client.get("/api/ml/models").get_json()["models"]
     actives = [m["id"] for m in models if m["is_active"]]
     assert actives == [id2]
+
+
+# --- 單筆預測（6.1）------------------------------------------------------
+
+def _train_and_activate(seeded_db) -> None:
+    """以 seeded_db 訓練一個模型並設為 active（供預測測試）。"""
+    db_path, models_dir = seeded_db
+    X = pd.read_sql_query(
+        "SELECT * FROM titanic", sqlite3.connect(db_path)
+    ).drop(columns=["Survived"])
+    y = pd.read_sql_query(
+        "SELECT Survived FROM titanic", sqlite3.connect(db_path)
+    )["Survived"]
+    pipeline, result = train_model(config.LOGISTIC_REGRESSION, X, y)
+    metadata = save_model(pipeline, result, db_path=db_path, models_dir=models_dir)
+    set_active_model(metadata.id, db_path=db_path)
+
+
+_VALID_PASSENGER = {
+    "Pclass": 1, "Sex": "female", "SibSp": 0, "Parch": 0,
+    "Name": "Test, Mrs. Example", "Ticket": "X",
+    "Age": 29.0, "Fare": 80.0, "Cabin": "C20", "Embarked": "C",
+}
+
+
+def test_predict_missing_body_returns_400(seeded_db) -> None:
+    db_path, models_dir = seeded_db
+    client = _make_client(db_path, models_dir)
+    response = client.post("/api/ml/predict")
+    assert response.status_code == 400
+
+
+def test_predict_missing_required_field_returns_400(seeded_db) -> None:
+    db_path, models_dir = seeded_db
+    client = _make_client(db_path, models_dir)
+    payload = {k: v for k, v in _VALID_PASSENGER.items() if k != "Sex"}
+    response = client.post("/api/ml/predict", json=payload)
+    assert response.status_code == 400
+    assert "Sex" in response.get_json()["error"]
+
+
+def test_predict_without_active_model_returns_409(seeded_db) -> None:
+    db_path, models_dir = seeded_db
+    client = _make_client(db_path, models_dir)
+    response = client.post("/api/ml/predict", json=_VALID_PASSENGER)
+    assert response.status_code == 409
+    assert "error" in response.get_json()
+
+
+def test_predict_valid_returns_200_with_probability(seeded_db) -> None:
+    db_path, models_dir = seeded_db
+    _train_and_activate(seeded_db)
+    client = _make_client(db_path, models_dir)
+
+    response = client.post("/api/ml/predict", json=_VALID_PASSENGER)
+    assert response.status_code == 200
+    body = response.get_json()
+    assert isinstance(body["survived"], bool)
+    assert 0.0 <= body["probability"] <= 1.0
