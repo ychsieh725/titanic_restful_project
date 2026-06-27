@@ -13,8 +13,10 @@ import threading
 import uuid
 from dataclasses import replace
 from datetime import datetime
+from pathlib import Path
 from typing import Optional
 
+from . import config
 from .types import Job, JobStatus
 
 
@@ -97,3 +99,58 @@ class JobStore:
 
 # 程序層級單一實例：供展示層與訓練背景執行緒共用同一份 job 狀態。
 job_store = JobStore()
+
+
+def run_training(
+    job_id: str,
+    algorithm: str,
+    store: JobStore,
+    db_path: str | None = None,
+    models_dir: str | Path | None = None,
+) -> None:
+    """背景執行緒目標：載入資料 → 訓練 → 持久化 → 更新 job 狀態。
+
+    任一步驟失敗都標記為 failed 並記錄錯誤訊息，不向外拋出，以免單一 job
+    失敗中斷整體服務（NFR-R1 / FR-3.9）。training 與 registry 採延遲匯入，
+    避免 JobStore 純狀態管理被迫載入 sklearn（保持模組輕量）。
+    """
+    # 延遲匯入：只有實際執行訓練時才載入重量級依賴。
+    from .registry import save_model
+    from .training import load_training_data, train_model
+
+    try:
+        store.mark_running(job_id)
+        X, y = load_training_data(db_path)
+        pipeline, result = train_model(algorithm, X, y)
+        metadata = save_model(pipeline, result, db_path=db_path, models_dir=models_dir)
+        store.mark_done(job_id, metadata.model_uid)
+    except Exception as exc:  # noqa: BLE001 — 邊界處統一轉為 failed 狀態
+        store.mark_failed(job_id, str(exc))
+
+
+def start_training_job(
+    algorithm: str,
+    store: JobStore = job_store,
+    db_path: str | None = None,
+    models_dir: str | Path | None = None,
+) -> Job:
+    """建立 job 並於背景執行緒啟動訓練，立即回傳 pending job（FR-3.7）。
+
+    先驗證演算法，未知時立即拋出 ValueError 且不建立 job——讓呼叫端（4.3 API）
+    取得明確的同步錯誤，而非非同步的 failed 狀態。
+
+    Raises:
+        ValueError: 演算法不在支援清單時（訊息明確列出可用選項）。
+    """
+    if algorithm not in config.SUPPORTED_ALGORITHMS:
+        supported = ", ".join(config.SUPPORTED_ALGORITHMS)
+        raise ValueError(f"不支援的演算法 '{algorithm}'，可用選項：{supported}")
+
+    job = store.create(algorithm)
+    thread = threading.Thread(
+        target=run_training,
+        args=(job.job_id, algorithm, store, db_path, models_dir),
+        daemon=True,
+    )
+    thread.start()
+    return job
