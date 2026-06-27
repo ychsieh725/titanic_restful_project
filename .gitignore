@@ -17,3 +17,11 @@ models/
 
 # 環境變數
 .env
+
+# 非主程式碼（工作流模板 / 文件 / 工具產物）
+# 註：以下部分項目已被 git 追蹤，這些規則僅對「未來新增」生效；
+#     既有追蹤檔案需另行 git rm --cached 才會真正移出版控。
+VibeCoding_Workflow_Templates/
+.claude/statusline-go.exe
+docs/
+Titanic_ML_SRS.md
