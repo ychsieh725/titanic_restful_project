@@ -60,6 +60,12 @@ def init_db():
 
         # 提交事務，將所有變更儲存到資料庫
         conn.commit()
+
+        # 建立 ML 平台資料表（ml_model / train_job）。
+        # 冪等且非破壞，與 titanic 重匯流程互不干擾（任務 2.3 / FR-4.2）。
+        from src.ml.schema import init_ml_schema
+
+        init_ml_schema(DB_PATH)
     except sqlite3.Error as e:
         # 發生錯誤時回滾事務，確保資料庫不會處於不一致的狀態
         conn.rollback()

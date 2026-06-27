@@ -1,7 +1,7 @@
 # WBS - Titanic 生存預測機器學習平台
 
 **建立日期:** 2026-06-27
-**最後更新:** 2026-06-27（4.1 訓練服務 完成；3.2 併入 3.1）
+**最後更新:** 2026-06-27（2.3 DB schema 完成）
 **開發模式:** MVP（SRS 必做需求 / Must）
 **主要語言:** Python 3.11+ / Flask / scikit-learn
 **專案描述:** 在現有 Flask CRUD（titanic 表）之上，擴充端到端 ML 平台：共用特徵工程管線、一鍵訓練+超參數調校、非同步 job 狀態查詢、模型持久化與 Registry、單筆/CSV 批次預測（含生存機率）。
@@ -19,7 +19,7 @@
 | 1.2 | 需求分析（SRS 已備） | ✅ 完成 | 高 | - | 1h | 來源 Titanic_ML_SRS.md |
 | 2.1 | 開功能分支 `feat/ml-platform` | ✅ 完成 | 高 | 1.2 | 0.1h | 已於 feat/ml-platform 工作 |
 | 2.2 | 服務層骨架 `src/ml/`（框架解耦） | ✅ 完成 | 高 | 2.1 | 1.5h | types/config/jobs 完成，CON-4 已驗證 |
-| 2.3 | DB schema：`ml_model` + `train_job` | ⏳ 待處理 | 高 | 2.1 | 1.5h | FR-4.2, §6.2/§6.3 |
+| 2.3 | DB schema：`ml_model` + `train_job` | ✅ 完成 | 高 | 2.1 | 1.5h | FR-4.2, §6.2/§6.3 |
 | 3.1 | 特徵工程管線（補值/Title/FamilySize/編碼，可序列化） | ✅ 完成 | 高 | 2.2 | 3h | FR-2.1~2.4, 2.7（共用管線） |
 | 3.2 | 管線單元測試（RED→GREEN） | ✅ 完成 | 高 | 3.1 | 1.5h | 併入 3.1：10 測試 / features.py 100% |
 | 4.1 | 訓練服務：LR+RF, GridSearchCV cv≥5, train/test split, 指標 | ✅ 完成 | 高 | 3.1 | 3h | FR-3.2~3.6 |
