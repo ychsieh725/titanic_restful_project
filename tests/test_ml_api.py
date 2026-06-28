@@ -7,6 +7,7 @@ blueprint 工廠注入臨時 DB / models 目錄，不碰專案 my_db.db。
 
 from __future__ import annotations
 
+import io
 import sqlite3
 import time
 
@@ -287,3 +288,112 @@ def test_predict_valid_returns_200_with_probability(seeded_db) -> None:
     body = response.get_json()
     assert isinstance(body["survived"], bool)
     assert 0.0 <= body["probability"] <= 1.0
+
+
+# --- CSV 批次預測（6.2 / FR-5.3, 5.4）------------------------------------
+
+_CSV_HEADER = "Pclass,Sex,SibSp,Parch,Name,Ticket,Age,Fare,Cabin,Embarked"
+
+
+def _csv_bytes(rows: list[str]) -> bytes:
+    return ("\n".join([_CSV_HEADER, *rows]) + "\n").encode("utf-8")
+
+
+_VALID_ROW = '1,female,0,0,"Doe, Mrs. A",X1,29,80,,C'
+
+
+def _upload(client, data_bytes: bytes, filename: str = "passengers.csv", query: str = ""):
+    return client.post(
+        f"/api/ml/predict/batch{query}",
+        data={"file": (io.BytesIO(data_bytes), filename)},
+        content_type="multipart/form-data",
+    )
+
+
+def test_batch_missing_file_returns_400(seeded_db) -> None:
+    db_path, models_dir = seeded_db
+    client = _make_client(db_path, models_dir)
+    response = client.post(
+        "/api/ml/predict/batch", content_type="multipart/form-data"
+    )
+    assert response.status_code == 400
+
+
+def test_batch_non_csv_extension_returns_400(seeded_db) -> None:
+    db_path, models_dir = seeded_db
+    client = _make_client(db_path, models_dir)
+    response = _upload(client, _csv_bytes([_VALID_ROW]), filename="data.txt")
+    assert response.status_code == 400
+
+
+def test_batch_empty_file_returns_400(seeded_db) -> None:
+    db_path, models_dir = seeded_db
+    client = _make_client(db_path, models_dir)
+    response = _upload(client, _csv_bytes([]))  # 僅表頭，無資料列
+    assert response.status_code == 400
+
+
+def test_batch_unparseable_csv_returns_400(seeded_db) -> None:
+    db_path, models_dir = seeded_db
+    client = _make_client(db_path, models_dir)
+    # 欄位數不一致 → pandas 解析錯誤
+    malformed = b'a,b,c\n1,2\n3,4,5,6,7\n'
+    response = _upload(client, malformed)
+    assert response.status_code == 400
+
+
+def test_batch_invalid_rows_return_422_with_row_index(seeded_db) -> None:
+    db_path, models_dir = seeded_db
+    _train_and_activate(seeded_db)
+    client = _make_client(db_path, models_dir)
+
+    bad_row = '9,female,0,0,"Doe, Mrs. B",X2,29,80,,Z'  # Pclass/Embarked 非法
+    response = _upload(client, _csv_bytes([_VALID_ROW, bad_row]))
+
+    assert response.status_code == 422
+    rows = response.get_json()["rows"]
+    assert rows[0]["row"] == 1
+    assert "Pclass" in rows[0]["fields"]
+
+
+def test_batch_without_active_model_returns_409(seeded_db) -> None:
+    db_path, models_dir = seeded_db
+    client = _make_client(db_path, models_dir)
+    response = _upload(client, _csv_bytes([_VALID_ROW]))
+    assert response.status_code == 409
+
+
+def test_batch_exceeding_max_rows_returns_413(seeded_db, monkeypatch) -> None:
+    db_path, models_dir = seeded_db
+    monkeypatch.setattr(config, "MAX_BATCH_ROWS", 2)
+    client = _make_client(db_path, models_dir)
+    response = _upload(client, _csv_bytes([_VALID_ROW] * 3))
+    assert response.status_code == 413
+
+
+def test_batch_valid_returns_200_json(seeded_db) -> None:
+    db_path, models_dir = seeded_db
+    _train_and_activate(seeded_db)
+    client = _make_client(db_path, models_dir)
+
+    response = _upload(client, _csv_bytes([_VALID_ROW, _VALID_ROW]))
+    assert response.status_code == 200
+    body = response.get_json()
+    assert body["total"] == 2
+    assert len(body["results"]) == 2
+    first = body["results"][0]
+    assert isinstance(first["survived"], bool)
+    assert 0.0 <= first["probability"] <= 1.0
+
+
+def test_batch_format_csv_returns_attachment(seeded_db) -> None:
+    db_path, models_dir = seeded_db
+    _train_and_activate(seeded_db)
+    client = _make_client(db_path, models_dir)
+
+    response = _upload(client, _csv_bytes([_VALID_ROW]), query="?format=csv")
+    assert response.status_code == 200
+    assert response.mimetype == "text/csv"
+    assert "attachment" in response.headers.get("Content-Disposition", "")
+    text = response.get_data(as_text=True)
+    assert "survived" in text and "probability" in text

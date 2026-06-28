@@ -128,10 +128,23 @@ def build_feature_pipeline() -> Pipeline:
     )
 
 
+def passengers_to_frame(passengers: list[PassengerInput]) -> pd.DataFrame:
+    """將多筆預測輸入轉為符合管線契約的 DataFrame（供 FR-5.3 批次預測）。
+
+    欄位順序對齊 config.RAW_FEATURE_COLUMNS，缺漏欄交由管線補值（CON-2）。
+    空清單回傳帶完整欄位的空 DataFrame，使下游欄位契約保持一致。
+    """
+    columns = list(config.RAW_FEATURE_COLUMNS)
+    rows = [
+        {column: getattr(passenger, column) for column in columns}
+        for passenger in passengers
+    ]
+    return pd.DataFrame(rows, columns=columns)
+
+
 def passenger_to_frame(passenger: PassengerInput) -> pd.DataFrame:
     """將單筆預測輸入轉為符合管線契約的單列 DataFrame（供 FR-5.1 預測）。
 
     欄位順序對齊 config.RAW_FEATURE_COLUMNS，缺漏欄交由管線補值（CON-2）。
     """
-    row = {column: getattr(passenger, column) for column in config.RAW_FEATURE_COLUMNS}
-    return pd.DataFrame([row], columns=list(config.RAW_FEATURE_COLUMNS))
+    return passengers_to_frame([passenger])

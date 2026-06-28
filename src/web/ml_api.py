@@ -11,17 +11,25 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from flask import Blueprint, jsonify, request
+import numpy as np
+import pandas as pd
+from flask import Blueprint, Response, jsonify, request
 
+from src.ml import config
 from src.ml.jobs import JobStore, job_store, start_training_job
-from src.ml.prediction import NoActiveModelError, predict_one
+from src.ml.prediction import NoActiveModelError, predict_batch, predict_one
 from src.ml.registry import (
     get_model_by_uid,
     list_models,
     set_active_model,
 )
 from src.ml.types import Job, JobStatus, ModelMetadata
-from src.ml.validation import ValidationError, validate_passenger
+from src.ml.validation import (
+    BatchValidationError,
+    ValidationError,
+    validate_passenger,
+    validate_passengers,
+)
 
 
 def create_ml_blueprint(
@@ -105,7 +113,69 @@ def create_ml_blueprint(
             {"survived": result.survived, "probability": result.probability}
         ), 200
 
+    @blueprint.post("/predict/batch")
+    def predict_batch_endpoint():
+        upload = request.files.get("file")
+        if upload is None or not upload.filename:
+            return jsonify({"error": "請上傳 CSV 檔（表單欄位名 file）。"}), 400
+        if not upload.filename.lower().endswith(".csv"):
+            return jsonify({"error": "僅接受副檔名為 .csv 的檔案。"}), 400
+
+        try:
+            frame = pd.read_csv(upload.stream)
+        except Exception:
+            return jsonify({"error": "CSV 解析失敗，請確認檔案為有效的 CSV 格式。"}), 400
+
+        if frame.empty:
+            return jsonify({"error": "CSV 沒有任何資料列。"}), 400
+        if len(frame) > config.MAX_BATCH_ROWS:
+            return jsonify(
+                {"error": f"資料列數超過上限 {config.MAX_BATCH_ROWS}，請分批上傳。"}
+            ), 413
+
+        try:
+            passengers = validate_passengers(_csv_to_records(frame))
+        except BatchValidationError as exc:
+            rows = [
+                {"row": index, "fields": fields}
+                for index, fields in sorted(exc.row_errors.items())
+            ]
+            return jsonify({"error": "批次輸入驗證失敗。", "rows": rows}), 422
+
+        try:
+            result = predict_batch(passengers, db_path=db_path)
+        except NoActiveModelError as exc:
+            return jsonify({"error": str(exc)}), 409
+
+        if request.args.get("format") == "csv":
+            return Response(
+                result.to_csv(index=False),
+                mimetype="text/csv",
+                headers={"Content-Disposition": "attachment; filename=predictions.csv"},
+            )
+
+        return jsonify(
+            {"results": result.to_dict(orient="records"), "total": len(result)}
+        ), 200
+
     return blueprint
+
+
+def _csv_to_records(frame: pd.DataFrame) -> list[dict]:
+    """將上傳的 CSV DataFrame 正規化為驗證層可用的原生 Python record 清單。
+
+    pandas 會把缺值讀成 NaN、數值欄讀成 numpy 純量；驗證層以 isinstance 檢查
+    原生 int/float/str。此處在資料邊界一次轉換：NaN → None、numpy 純量 → 原生型別，
+    讓服務層維持框架/函式庫無關（CON-4）。
+    """
+    cleaned = frame.astype(object).where(pd.notnull(frame), None)
+    return [
+        {
+            key: (value.item() if isinstance(value, np.generic) else value)
+            for key, value in record.items()
+        }
+        for record in cleaned.to_dict(orient="records")
+    ]
 
 
 def _job_payload(job: Job, db_path: str | None) -> dict:

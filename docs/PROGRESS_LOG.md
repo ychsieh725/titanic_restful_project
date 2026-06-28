@@ -1,9 +1,9 @@
 # 開發進度紀錄 — Titanic ML 平台
 
 > **分支:** `feat/ml-platform`
-> **最後更新:** 2026-06-27 16:30
-> **狀態:** ✅ M1 達成；M2 進行中（5.2 + 6.1 + 6.3 完成，待 6.2 CSV 批次）
-> **測試總計:** 83 passed / 覆蓋率 99%
+> **最後更新:** 2026-06-28 11:40
+> **狀態:** ✅ M1 達成；✅ M2 達成（5.2 + 6.1 + 6.2 + 6.3 全完成）
+> **測試總計:** 100 passed / 覆蓋率 99%
 > **開發流程:** `/task-next → /plan → /tdd → /verify`，每任務 TDD（RED→GREEN）+ 獨立 commit
 
 ---
@@ -13,7 +13,7 @@
 | 里程碑 | 目標 | 狀態 |
 |---|---|---|
 | M1 核心管線可訓練 | 一鍵訓練 + 超參數 + 模型儲存 | ✅ 完成 |
-| M2 預測可用 | 單筆 + CSV 批次預測 | 🔄 進行中（5.2 + 6.1 + 6.3 完成，6.2 未做） |
+| M2 預測可用 | 單筆 + CSV 批次預測 | ✅ 完成（5.2 + 6.1 + 6.2 + 6.3） |
 | M3 MVP 驗收 | UI 串接 + 6 大必做驗收 | ⏳ 未開始 |
 
 ## 2. 任務完成總覽
@@ -30,9 +30,8 @@
 | 4.3 | 訓練 API（POST train / GET status） | ✅ | `a356094` |
 | 5.2 | 模型清單 + active 切換 API | ✅ | `a4aecd0` |
 | 6.1 | 單筆預測服務 + API | ✅ | `3890a15` |
-| 6.3 | 輸入驗證（schema-based） | ✅ | (本次) |
-| 5.2 | 模型清單 + active 切換 | ⏳ | — |
-| 6.x | 單筆 / CSV 批次預測 | ⏳ | — |
+| 6.3 | 輸入驗證（schema-based） | ✅ | `2a72f3d` |
+| 6.2 | CSV 批次預測 + 結果 CSV 下載 | ✅ | (本次) |
 | 7.x / 8.x | UI / 整合測試 / 驗收 | ⏳ | — |
 
 ---
@@ -154,9 +153,29 @@
 - **契約精修**：`/predict` 欄位驗證失敗由 400 改 **422**（格式對但語意錯，
   含 `fields` 明細）；400 僅保留給無法解析的 body
 
+### 6.2 CSV 批次預測 — `src/ml/prediction.py` + `validation.py` + `src/web/ml_api.py`
+
+**對應需求:** FR-5.3, 5.4
+
+- **服務層**
+  - `features.passengers_to_frame(list)`：多筆轉管線契約 DataFrame；
+    `passenger_to_frame` 改委派此函式（DRY）
+  - `prediction.predict_batch(passengers, db_path) -> DataFrame`：一次載 active
+    pipeline 整批 `predict_proba`（共用管線 CON-2），附 `probability`/`survived`
+    兩欄；機率/判定以**原生 Python 型別**輸出（供 jsonify / CSV）；空清單回空結果
+  - `validation.validate_passengers(records)`：逐列重用 `validate_passenger`
+    蒐集所有問題列，全合法回 list；否則拋 `BatchValidationError(row_errors)`
+  - `config.MAX_BATCH_ROWS = 10000`：單次上限
+- **展示層** `POST /api/ml/predict/batch`（multipart 上傳）
+  - 無檔 / 非 `.csv` / 解析失敗 / 0 列 → **400**；超 `MAX_BATCH_ROWS` → **413**
+  - 驗證失敗 → **422** `{rows:[{row, fields}]}`（標出每列）；無 active → **409**
+  - 預設 **200** JSON `{results, total}`；`?format=csv` → **200** `text/csv` 附件下載
+  - `_csv_to_records`：在資料邊界把 pandas NaN → None、numpy 純量 → 原生型別，
+    讓服務層維持函式庫無關（CON-4）；修正 `where` 無法在 float 欄存 None 之陷阱
+
 ---
 
-## 5. 測試細節（83 passed）
+## 5. 測試細節（100 passed）
 
 | 測試檔 | 數量 | 覆蓋重點 |
 |---|---|---|
@@ -165,9 +184,9 @@
 | `tests/test_schema.py` | 7 | 建表、欄位齊全（PRAGMA 比對）、冪等、**單一 active 約束（IntegrityError）**、status CHECK |
 | `tests/test_registry.py` | 12 | joblib 檔+DB 列、JSON 欄往返、預設 inactive、載回可預測、uid 查詢、UNIQUE(model_uid) 約束、**清單排序、active 切換唯一性、get_active** |
 | `tests/test_jobs.py` | 7 | JobStore create/get/list 排序/`_transition` KeyError、**run_training 成功 done**、**失敗 failed 不中斷（NFR-R1）**、start_training_job 立即回傳並完成、未知演算法 ValueError 不建 job |
-| `tests/test_ml_api.py` | 16 | 訓練（400/422/202）、status（404/done含指標/failed）、模型清單、activate（200/404/切換唯一）、**預測（缺 body→400、缺欄位→422、非法值→422含 fields、無 active→409、成功→200含 probability）** |
-| `tests/test_prediction.py` | 3 | predict_one 回 PredictionResult、survived 對應機率門檻、**無 active→NoActiveModelError** |
-| `tests/test_validation.py` | 7（含參數化 共 27 例） | 合法→PassengerInput、可空欄位、**一次蒐集所有缺漏**、範圍/允許值、型別、長度上限 |
+| `tests/test_ml_api.py` | 25 | 訓練（400/422/202）、status（404/done含指標/failed）、模型清單、activate（200/404/切換唯一）、單筆預測（400/422含 fields/409/200）、**批次（無檔/非csv/空檔/壞CSV→400、超列→413、壞列→422含 row、無 active→409、成功→200 JSON、`?format=csv`→text/csv 附件）** |
+| `tests/test_prediction.py` | 8 | predict_one 回 PredictionResult、survived 對應門檻、無 active→例外；**predict_batch：survived/probability 欄、門檻一致、原生型別、空清單、無 active→例外** |
+| `tests/test_validation.py` | 10（含參數化 共 30 例） | 合法→PassengerInput、可空欄位、**一次蒐集所有缺漏**、範圍/允許值、型別、長度上限；**批次：全合法→list、空→[]、依列索引蒐集錯誤** |
 
 **測試策略**
 - 全程 TDD：先寫失敗測試（RED）→ 最小實作（GREEN）→ 重構
@@ -203,7 +222,7 @@
 | CON-4 服務層框架解耦 | ✅ | `src/ml/` 無 import flask；展示層獨立於 `src/web/`（grep 驗證） |
 | CON-3 模型持久化 | ✅ | joblib 存模型、metadata 入 ml_model 表 |
 | NFR-S2 參數化查詢 | ✅ | 所有 SQL 用 `?` 佔位，無字串拼接 |
-| testing 80%+ | ✅ | 93% |
+| testing 80%+ | ✅ | 99% |
 
 ---
 
@@ -211,6 +230,5 @@
 
 | 順序 | 任務 | 依賴 | 說明 |
 |---|---|---|---|
-| 1 | **6.2 CSV 批次預測 + 下載** | 6.1 ✅ | 逐列驗證（重用 validate_passenger）+ 結果 CSV（FR-5.3, 5.4） |
-| 2 | 7.x UI | 各 API | 訓練/模型/預測頁（M3） |
-| 3 | 8.x 整合測試 + 驗收 | 7.x | 6 大必做驗收 |
+| 1 | 7.x UI | 各 API | 訓練/模型/預測頁（M3） |
+| 2 | 8.x 整合測試 + 驗收 | 7.x | 6 大必做驗收 |

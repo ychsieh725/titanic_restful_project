@@ -24,6 +24,17 @@ class ValidationError(Exception):
         super().__init__("輸入驗證失敗：" + "；".join(errors.values()))
 
 
+class BatchValidationError(Exception):
+    """批次驗證失敗，row_errors 為「列索引（0 起算）→ 欄位錯誤」對應（FR-5.3）。
+
+    展示層據此回 422 並標出每一列的問題欄位，讓使用者一次修正整份 CSV。
+    """
+
+    def __init__(self, row_errors: dict[int, dict[str, str]]) -> None:
+        self.row_errors = row_errors
+        super().__init__(f"批次驗證失敗：{len(row_errors)} 列含不合法欄位。")
+
+
 def validate_passenger(data: dict) -> PassengerInput:
     """驗證單筆輸入並轉為 PassengerInput。
 
@@ -54,6 +65,35 @@ def validate_passenger(data: dict) -> PassengerInput:
         Name=name, Ticket=ticket,
         Age=age, Fare=fare, Cabin=cabin, Embarked=embarked,
     )
+
+
+def validate_passengers(records: list[dict]) -> list[PassengerInput]:
+    """逐列驗證批次輸入，蒐集所有問題列後一次回報（非 fail-fast）。
+
+    重用 validate_passenger 確保單筆與批次規則一致（DRY）。
+
+    Args:
+        records: 每列一個 dict 的乘客原始輸入；空清單回傳空清單。
+
+    Returns:
+        全部合法時，依序回傳對應的 PassengerInput 清單。
+
+    Raises:
+        BatchValidationError: 任一列不合法時，row_errors 含所有問題列。
+    """
+    validated: list[PassengerInput] = []
+    row_errors: dict[int, dict[str, str]] = {}
+
+    for index, record in enumerate(records):
+        try:
+            validated.append(validate_passenger(record))
+        except ValidationError as exc:
+            row_errors[index] = exc.errors
+
+    if row_errors:
+        raise BatchValidationError(row_errors)
+
+    return validated
 
 
 # --- 欄位驗證輔助（缺漏即記錄並回 None，避免後續再次報錯）----------------

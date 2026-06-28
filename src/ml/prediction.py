@@ -9,7 +9,9 @@
 
 from __future__ import annotations
 
-from .features import passenger_to_frame
+import pandas as pd
+
+from .features import passenger_to_frame, passengers_to_frame
 from .registry import get_active_model, load_model_file
 from .types import PassengerInput, PredictionResult
 
@@ -52,3 +54,42 @@ def predict_one(
         survived=probability >= SURVIVAL_THRESHOLD,
         probability=probability,
     )
+
+
+def predict_batch(
+    passengers: list[PassengerInput],
+    db_path: str | None = None,
+) -> pd.DataFrame:
+    """以 active 模型對多筆輸入批次預測（FR-5.3）。
+
+    一次載回 active pipeline 並整批 predict_proba（共用管線 CON-2），
+    回傳含原始欄位加上 survived / probability 兩欄的 DataFrame。
+    機率與判定以原生 Python 型別輸出，供展示層直接 jsonify / CSV 下載。
+
+    Args:
+        passengers: 已驗證的乘客清單；空清單回傳僅含欄位的空結果。
+        db_path: registry 的 SQLite 路徑；省略時用設定預設。
+
+    Returns:
+        DataFrame，欄位 = 原始輸入 + ["probability", "survived"]。
+
+    Raises:
+        NoActiveModelError: 目前無 active 模型時。
+    """
+    metadata = get_active_model(db_path=db_path)
+    if metadata is None:
+        raise NoActiveModelError("目前沒有啟用中的模型，請先完成訓練並設定 active 模型。")
+
+    frame = passengers_to_frame(passengers)
+    result = frame.copy()
+
+    if frame.empty:
+        result["probability"] = pd.Series(dtype=float)
+        result["survived"] = pd.Series(dtype=bool)
+        return result
+
+    pipeline = load_model_file(metadata)
+    probabilities = pipeline.predict_proba(frame)[:, 1]
+    result["probability"] = [float(value) for value in probabilities]
+    result["survived"] = [bool(value >= SURVIVAL_THRESHOLD) for value in probabilities]
+    return result

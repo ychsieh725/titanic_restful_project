@@ -8,7 +8,12 @@ from __future__ import annotations
 
 import pytest
 
-from src.ml.validation import ValidationError, validate_passenger
+from src.ml.validation import (
+    BatchValidationError,
+    ValidationError,
+    validate_passenger,
+    validate_passengers,
+)
 from src.ml.types import PassengerInput
 
 
@@ -112,3 +117,30 @@ def test_type_and_length_violations_rejected(field: str, bad_value) -> None:
     with pytest.raises(ValidationError) as exc_info:
         validate_passenger(data)
     assert field in exc_info.value.errors
+
+
+# --- 批次驗證（6.2 / FR-5.3）---------------------------------------------
+
+def test_validate_passengers_all_valid_returns_list() -> None:
+    records = [_valid(), _valid(), _valid()]
+    result = validate_passengers(records)
+    assert len(result) == 3
+    assert all(isinstance(p, PassengerInput) for p in result)
+
+
+def test_validate_passengers_empty_returns_empty_list() -> None:
+    assert validate_passengers([]) == []
+
+
+def test_validate_passengers_collects_errors_by_row_index() -> None:
+    bad = _valid()
+    bad["Pclass"] = 9          # row 1 非法
+    worse = {k: v for k, v in _valid().items() if k != "Sex"}  # row 2 缺 Sex
+
+    with pytest.raises(BatchValidationError) as exc_info:
+        validate_passengers([_valid(), bad, worse])
+
+    row_errors = exc_info.value.row_errors
+    assert set(row_errors.keys()) == {1, 2}
+    assert "Pclass" in row_errors[1]
+    assert "Sex" in row_errors[2]
