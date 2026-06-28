@@ -39,6 +39,7 @@ def train_model(
     algorithm: str,
     X: pd.DataFrame,
     y: pd.Series,
+    param_grid: dict[str, list] | None = None,
 ) -> tuple[Pipeline, TrainResult]:
     """訓練單一演算法並回傳已 fit 的整條 pipeline 與結果摘要。
 
@@ -46,6 +47,8 @@ def train_model(
         algorithm: SUPPORTED_ALGORITHMS 之一。
         X: 含 RAW_FEATURE_COLUMNS 的原始特徵 DataFrame。
         y: 目標欄位（0/1）。
+        param_grid: GridSearchCV 格點；省略時用 config 預設。已驗證的使用者
+            自訂格點由呼叫端（hyperparams.build_param_grid）提供。
 
     Returns:
         (fitted_pipeline, TrainResult)。pipeline 含前處理＋最佳分類器，
@@ -55,7 +58,8 @@ def train_model(
         ValueError: 演算法不在支援清單時（訊息明確列出可用選項）。
     """
     estimator = _build_estimator(algorithm)
-    param_grid = config.get_param_grid(algorithm)
+    if param_grid is None:
+        param_grid = config.get_param_grid(algorithm)
 
     pipeline = Pipeline(
         steps=[

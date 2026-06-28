@@ -98,6 +98,42 @@ def test_train_missing_algorithm_returns_400(seeded_db) -> None:
     assert response.status_code == 400
 
 
+def test_train_with_valid_hyperparameters_returns_202(seeded_db) -> None:
+    db_path, models_dir = seeded_db
+    client = _make_client(db_path, models_dir)
+    response = client.post("/api/ml/train", json={
+        "algorithm": config.LOGISTIC_REGRESSION,
+        "hyperparameters": {"C": [0.5, 1.0]},
+    })
+    assert response.status_code == 202
+
+
+def test_train_with_invalid_hyperparameter_returns_422_with_fields(seeded_db) -> None:
+    db_path, models_dir = seeded_db
+    client = _make_client(db_path, models_dir)
+    response = client.post("/api/ml/train", json={
+        "algorithm": config.LOGISTIC_REGRESSION,
+        "hyperparameters": {"C": [-1]},
+    })
+    assert response.status_code == 422
+    assert "C" in response.get_json()["fields"]
+
+
+def test_train_with_oversized_grid_returns_422(seeded_db) -> None:
+    db_path, models_dir = seeded_db
+    client = _make_client(db_path, models_dir)
+    response = client.post("/api/ml/train", json={
+        "algorithm": config.RANDOM_FOREST,
+        "hyperparameters": {
+            "n_estimators": [1, 2, 3, 4, 5],
+            "max_depth": [1, 2, 3, 4, 5],
+            "min_samples_split": [2, 3, 4, 5, 6],
+            "min_samples_leaf": [1, 2, 3, 4, 5],
+        },
+    })
+    assert response.status_code == 422
+
+
 def test_train_unknown_algorithm_returns_422(seeded_db) -> None:
     db_path, models_dir = seeded_db
     client = _make_client(db_path, models_dir)

@@ -33,6 +33,29 @@ PARAM_GRIDS: dict[str, dict[str, list]] = {
     },
 }
 
+# --- 使用者可調超參數規格（FR-3.3 防呆驗證 / NFR-M2 集中設定）-------------
+# 每個演算法可調參數的型別與安全範圍，供 hyperparams.build_param_grid 驗證
+# 使用者輸入，避免不合理值（負的 C、過大的樹數）造成訓練失敗或卡死。
+#   type: "float" | "int" | "int_or_none"（max_depth 允許 None=不限深度）| "choice"
+HYPERPARAM_SPECS: dict[str, dict[str, dict]] = {
+    LOGISTIC_REGRESSION: {
+        "C": {"label": "C（正則化強度倒數）", "type": "float", "min": 1e-4, "max": 1e4},
+        "penalty": {"label": "penalty（正則化）", "type": "choice", "choices": ["l1", "l2"]},
+    },
+    RANDOM_FOREST: {
+        "n_estimators": {"label": "n_estimators（樹的數量）", "type": "int", "min": 1, "max": 1000},
+        "max_depth": {"label": "max_depth（最大深度）", "type": "int_or_none", "min": 1, "max": 100},
+        "min_samples_split": {"label": "min_samples_split（分裂最小樣本）", "type": "int", "min": 2, "max": 200},
+        "min_samples_leaf": {"label": "min_samples_leaf（葉節點最小樣本）", "type": "int", "min": 1, "max": 200},
+    },
+}
+
+# 防呆上限：單一參數候選值個數，及整個 GridSearch 的參數組合總數。
+# 組合數上限避免笛卡兒積爆炸導致訓練時間失控（呼應 NFR-P1 < 60s）。
+# 預設 RF 格點為 3×4×3×3=108 組，故上限需 >= 108。
+MAX_VALUES_PER_PARAM = 20
+MAX_GRID_COMBINATIONS = 200
+
 # --- 訓練設定（FR-3.3 / FR-3.6 / FR-3.10）---------------------------------
 
 CV_FOLDS = 5          # 交叉驗證折數，需 >= 5

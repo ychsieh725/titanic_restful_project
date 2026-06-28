@@ -16,6 +16,7 @@ import pandas as pd
 from flask import Blueprint, Response, jsonify, request
 
 from src.ml import config
+from src.ml.hyperparams import HyperparameterError, build_param_grid
 from src.ml.jobs import JobStore, job_store, start_training_job
 from src.ml.prediction import NoActiveModelError, predict_batch, predict_one
 from src.ml.registry import (
@@ -54,12 +55,24 @@ def create_ml_blueprint(
         if not data or "algorithm" not in data:
             return jsonify({"error": "缺少必要欄位 'algorithm'"}), 400
 
+        # 驗證使用者自訂超參數（防呆）：不合法回 422 帶欄位明細，
+        # 不讓不合理輸入流入 GridSearchCV 造成訓練失敗或卡死。
+        try:
+            param_grid = build_param_grid(
+                data["algorithm"], data.get("hyperparameters")
+            )
+        except HyperparameterError as exc:
+            return jsonify({"error": "超參數驗證失敗", "fields": exc.errors}), 422
+        except ValueError as exc:  # 未知演算法
+            return jsonify({"error": str(exc)}), 422
+
         try:
             job = start_training_job(
                 data["algorithm"],
                 store=active_store,
                 db_path=db_path,
                 models_dir=models_dir,
+                param_grid=param_grid,
             )
         except ValueError as exc:
             return jsonify({"error": str(exc)}), 422

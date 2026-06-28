@@ -2,6 +2,28 @@
 
 {% block title %}訓練模型 — Titanic ML{% endblock %}
 
+{% block head %}
+<style>
+    .hp-section {
+        margin-top: 18px;
+        border-top: 1px solid var(--line);
+        padding-top: 14px;
+    }
+
+    .hp-error {
+        display: block;
+        font-size: 0.8rem;
+        margin-top: 4px;
+    }
+
+    .field .hint {
+        font-size: 0.78rem;
+        color: var(--muted);
+        margin-top: 4px;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <h1>訓練模型</h1>
 
@@ -11,6 +33,60 @@
         <option value="logistic_regression">Logistic Regression</option>
         <option value="random_forest">Random Forest</option>
     </select>
+
+    <div class="hp-section">
+        <h3 style="font-size:1rem; margin:0 0 4px;">超參數
+            <span class="muted" style="font-weight:400; font-size:0.85rem;">（選填，留空用預設格點；多個候選值以逗號分隔，會做 GridSearch）</span>
+        </h3>
+
+        <!-- Logistic Regression -->
+        <div class="hp-group" data-algo="logistic_regression">
+            <div class="form-grid">
+                <div class="field">
+                    <label>C <span class="zh">正則化強度倒數</span></label>
+                    <input data-hp="C" placeholder="0.1, 1, 10">
+                    <span class="hint">數值，範圍 0.0001–10000</span>
+                    <span class="bad hp-error" data-hp-error="C" hidden></span>
+                </div>
+                <div class="field">
+                    <label>penalty <span class="zh">正則化方式</span></label>
+                    <input data-hp="penalty" placeholder="l1, l2">
+                    <span class="hint">l1 或 l2</span>
+                    <span class="bad hp-error" data-hp-error="penalty" hidden></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Random Forest -->
+        <div class="hp-group" data-algo="random_forest" hidden>
+            <div class="form-grid">
+                <div class="field">
+                    <label>n_estimators <span class="zh">樹的數量</span></label>
+                    <input data-hp="n_estimators" placeholder="100, 300">
+                    <span class="hint">整數，範圍 1–1000</span>
+                    <span class="bad hp-error" data-hp-error="n_estimators" hidden></span>
+                </div>
+                <div class="field">
+                    <label>max_depth <span class="zh">最大深度</span></label>
+                    <input data-hp="max_depth" placeholder="none, 10">
+                    <span class="hint">整數 1–100，或 none（不限）</span>
+                    <span class="bad hp-error" data-hp-error="max_depth" hidden></span>
+                </div>
+                <div class="field">
+                    <label>min_samples_split <span class="zh">分裂最小樣本</span></label>
+                    <input data-hp="min_samples_split" placeholder="2, 5">
+                    <span class="hint">整數，範圍 2–200</span>
+                    <span class="bad hp-error" data-hp-error="min_samples_split" hidden></span>
+                </div>
+                <div class="field">
+                    <label>min_samples_leaf <span class="zh">葉節點最小樣本</span></label>
+                    <input data-hp="min_samples_leaf" placeholder="1, 2">
+                    <span class="hint">整數，範圍 1–200</span>
+                    <span class="bad hp-error" data-hp-error="min_samples_leaf" hidden></span>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div>
         <button id="trainBtn" type="button">開始訓練</button>
@@ -36,6 +112,7 @@
 
 {% block scripts %}
 <script>
+    const algorithmSelect = document.getElementById("algorithm");
     const trainBtn = document.getElementById("trainBtn");
     const statusCard = document.getElementById("statusCard");
     const jobIdEl = document.getElementById("jobId");
@@ -48,19 +125,72 @@
 
     const POLL_INTERVAL_MS = 1500;
 
+    // 依演算法顯示對應的超參數欄位群組。
+    function toggleHyperparamGroups() {
+        const algorithm = algorithmSelect.value;
+        document.querySelectorAll(".hp-group").forEach((group) => {
+            group.hidden = group.dataset.algo !== algorithm;
+        });
+    }
+
+    algorithmSelect.addEventListener("change", toggleHyperparamGroups);
+    toggleHyperparamGroups();
+
+    // 蒐集當前演算法的超參數覆寫；空欄位略過（用後端預設）。
+    function collectHyperparameters() {
+        const algorithm = algorithmSelect.value;
+        const group = document.querySelector(`.hp-group[data-algo="${algorithm}"]`);
+        const overrides = {};
+        group.querySelectorAll("input[data-hp]").forEach((input) => {
+            const values = input.value.split(",").map((v) => v.trim()).filter((v) => v.length > 0);
+            if (values.length > 0) {
+                overrides[input.dataset.hp] = values;
+            }
+        });
+        return overrides;
+    }
+
+    function clearFieldErrors() {
+        document.querySelectorAll(".hp-error").forEach((el) => {
+            el.hidden = true;
+            el.textContent = "";
+        });
+    }
+
+    // 後端 422 的逐欄位錯誤：對應欄位顯示於其下方，未對應者（如 _grid）併入總錯誤。
+    function showFieldErrors(fields) {
+        const leftover = [];
+        for (const [name, message] of Object.entries(fields)) {
+            const el = document.querySelector(`.hp-error[data-hp-error="${name}"]`);
+            if (el) {
+                el.hidden = false;
+                el.textContent = message;
+            } else {
+                leftover.push(message);
+            }
+        }
+        if (leftover.length > 0) {
+            showError(leftover.join("\n"));
+        }
+    }
+
     trainBtn.addEventListener("click", async () => {
-        const algorithm = document.getElementById("algorithm").value;
+        const algorithm = algorithmSelect.value;
         resetStatus();
+        clearFieldErrors();
         trainBtn.disabled = true;
 
         try {
             const response = await fetch("/api/ml/train", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ algorithm }),
+                body: JSON.stringify({ algorithm, hyperparameters: collectHyperparameters() }),
             });
             const body = await response.json();
             if (!response.ok) {
+                if (body.fields) {
+                    showFieldErrors(body.fields);
+                }
                 showError(body.error || "訓練啟動失敗");
                 trainBtn.disabled = false;
                 return;
