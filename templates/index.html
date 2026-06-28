@@ -108,9 +108,10 @@
                 <td>${item.Fare}</td>
                 <td>${item.Embarked ?? ""}</td>
                 <td>
-                    <a href="/passengers/${item.PassengerId}/edit">編輯</a>
-                    |
-                    <button onclick="deletePassenger(${item.PassengerId})">刪除</button>
+                    <div class="actions">
+                        <button type="button" onclick="location.href='/passengers/${item.PassengerId}/edit'">編輯</button>
+                        <button type="button" class="danger" onclick="deletePassenger(${item.PassengerId})">刪除</button>
+                    </div>
                 </td>
             `;
 

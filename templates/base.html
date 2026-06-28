@@ -113,6 +113,17 @@
             padding: 4px 10px;
         }
 
+        /* 危險操作（如刪除）用紅色 */
+        button.danger {
+            background: var(--bad);
+        }
+
+        /* 並排操作按鈕 */
+        .actions {
+            display: flex;
+            gap: 6px;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
@@ -156,7 +167,7 @@
 
 <body>
     <nav>
-        <span class="brand">🚢 Titanic ML</span>
+        <span class="brand">Titanic ML</span>
         <a href="/"{% if active_page == 'home' %} class="active"{% endif %}>首頁</a>
         <a href="/ml/train"{% if active_page == 'train' %} class="active"{% endif %}>訓練</a>
         <a href="/ml/models"{% if active_page == 'models' %} class="active"{% endif %}>模型</a>
