@@ -9,7 +9,7 @@
     <form id="passengerForm">
         <div class="form-grid">
             <div class="field full">
-                <label>Name</label>
+                <label>Name <span class="zh">姓名</span></label>
                 <div style="display:flex; gap:8px;">
                     <input name="Name" placeholder="例：Braund, Mr. Owen Harris" required style="flex:1;">
                     <button type="button" id="randomNameBtn" title="依目前 Sex 隨機產生姓名"
@@ -28,7 +28,7 @@
             </div>
 
             <div class="field">
-                <label>Survived</label>
+                <label>Survived <span class="zh">是否生還</span></label>
                 <select name="Survived" required>
                     <option value="0">0：未生還</option>
                     <option value="1">1：生還</option>
@@ -36,7 +36,7 @@
             </div>
 
             <div class="field">
-                <label>Pclass</label>
+                <label>Pclass <span class="zh">艙等</span></label>
                 <select name="Pclass" required>
                     <option value="1">1 等艙</option>
                     <option value="2">2 等艙</option>
@@ -45,7 +45,7 @@
             </div>
 
             <div class="field">
-                <label>Sex</label>
+                <label>Sex <span class="zh">性別</span></label>
                 <select name="Sex" required>
                     <option value="male">male</option>
                     <option value="female">female</option>
@@ -53,7 +53,7 @@
             </div>
 
             <div class="field">
-                <label>Embarked</label>
+                <label>Embarked <span class="zh">登船港口</span></label>
                 <select name="Embarked">
                     <option value="">未知</option>
                     <option value="C">C</option>
@@ -63,43 +63,43 @@
             </div>
 
             <div class="field">
-                <label>Age</label>
+                <label>Age <span class="zh">年齡</span></label>
                 <input name="Age" type="number" step="0.01" placeholder="例：22">
             </div>
 
             <div class="field">
-                <label>Fare</label>
+                <label>Fare <span class="zh">票價</span></label>
                 <input name="Fare" type="number" step="0.0001" min="0" value="0" required>
             </div>
 
             <div class="field">
-                <label>SibSp</label>
+                <label>SibSp <span class="zh">兄弟姊妹/配偶</span></label>
                 <input name="SibSp" type="number" min="0" value="0" required>
             </div>
 
             <div class="field">
-                <label>Parch</label>
+                <label>Parch <span class="zh">父母/子女</span></label>
                 <input name="Parch" type="number" min="0" value="0" required>
             </div>
 
             <div class="field">
-                <label>Ticket</label>
+                <label>Ticket <span class="zh">票號</span></label>
                 <input name="Ticket" placeholder="例：A/5 21171" required>
             </div>
 
             <div class="field">
-                <label>Cabin</label>
+                <label>Cabin <span class="zh">艙房</span></label>
                 <input name="Cabin" placeholder="例：C85">
             </div>
 
             <div class="field full">
-                <button type="submit" class="btn-block">新增乘客</button>
+                <button type="submit" class="btn-block">Add Passenger</button>
             </div>
         </div>
     </form>
 
     <p style="text-align:center; margin-top:14px;">
-        <a href="/" class="muted">取消，回首頁</a>
+        <a href="/" class="muted">Back to Home</a>
     </p>
 </div>
 {% endblock %}
