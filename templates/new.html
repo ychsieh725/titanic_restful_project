@@ -1,127 +1,132 @@
-<!DOCTYPE html>
-<html lang="zh-Hant">
+{% extends "base.html" %}
 
-<head>
-    <meta charset="UTF-8">
-    <title>新增乘客</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 30px;
-        }
+{% block title %}新增乘客 — Titanic ML{% endblock %}
 
-        label {
-            display: block;
-            margin-top: 10px;
-        }
+{% block content %}
+<h1>新增乘客</h1>
 
-        input,
-        select {
-            padding: 6px;
-            width: 300px;
-        }
-
-        button {
-            margin-top: 20px;
-            padding: 8px 16px;
-        }
-    </style>
-</head>
-
-<body>
-    <h1>新增乘客</h1>
-
+<div class="card">
     <form id="passengerForm">
-        <label>Survived</label>
-        <select name="Survived" required>
-            <option value="0">0：未生還</option>
-            <option value="1">1：生還</option>
-        </select>
+        <div class="form-grid">
+            <div class="field full">
+                <label>Name</label>
+                <input name="Name" placeholder="例：Braund, Mr. Owen Harris" required>
+            </div>
 
-        <label>Pclass</label>
-        <select name="Pclass" required>
-            <option value="1">1 等艙</option>
-            <option value="2">2 等艙</option>
-            <option value="3">3 等艙</option>
-        </select>
+            <div class="field">
+                <label>Survived</label>
+                <select name="Survived" required>
+                    <option value="0">0：未生還</option>
+                    <option value="1">1：生還</option>
+                </select>
+            </div>
 
-        <label>Name</label>
-        <input name="Name" required>
+            <div class="field">
+                <label>Pclass</label>
+                <select name="Pclass" required>
+                    <option value="1">1 等艙</option>
+                    <option value="2">2 等艙</option>
+                    <option value="3">3 等艙</option>
+                </select>
+            </div>
 
-        <label>Sex</label>
-        <select name="Sex" required>
-            <option value="male">male</option>
-            <option value="female">female</option>
-        </select>
+            <div class="field">
+                <label>Sex</label>
+                <select name="Sex" required>
+                    <option value="male">male</option>
+                    <option value="female">female</option>
+                </select>
+            </div>
 
-        <label>Age</label>
-        <input name="Age" type="number" step="0.01">
+            <div class="field">
+                <label>Embarked</label>
+                <select name="Embarked">
+                    <option value="">未知</option>
+                    <option value="C">C</option>
+                    <option value="Q">Q</option>
+                    <option value="S">S</option>
+                </select>
+            </div>
 
-        <label>SibSp</label>
-        <input name="SibSp" type="number" min="0" value="0" required>
+            <div class="field">
+                <label>Age</label>
+                <input name="Age" type="number" step="0.01" placeholder="例：22">
+            </div>
 
-        <label>Parch</label>
-        <input name="Parch" type="number" min="0" value="0" required>
+            <div class="field">
+                <label>Fare</label>
+                <input name="Fare" type="number" step="0.0001" min="0" value="0" required>
+            </div>
 
-        <label>Ticket</label>
-        <input name="Ticket" required>
+            <div class="field">
+                <label>SibSp</label>
+                <input name="SibSp" type="number" min="0" value="0" required>
+            </div>
 
-        <label>Fare</label>
-        <input name="Fare" type="number" step="0.0001" min="0" value="0" required>
+            <div class="field">
+                <label>Parch</label>
+                <input name="Parch" type="number" min="0" value="0" required>
+            </div>
 
-        <label>Cabin</label>
-        <input name="Cabin">
+            <div class="field">
+                <label>Ticket</label>
+                <input name="Ticket" placeholder="例：A/5 21171" required>
+            </div>
 
-        <label>Embarked</label>
-        <select name="Embarked">
-            <option value="">未知</option>
-            <option value="C">C</option>
-            <option value="Q">Q</option>
-            <option value="S">S</option>
-        </select>
+            <div class="field">
+                <label>Cabin</label>
+                <input name="Cabin" placeholder="例：C85">
+            </div>
 
-        <button type="submit">新增</button>
-        <a href="/">回首頁</a>
+            <div class="field full">
+                <button type="submit" class="btn-block">新增乘客</button>
+            </div>
+        </div>
     </form>
 
-    <script>
-        // 監聽 passengerForm 的 submit 事件，當表單被提交時，會觸發這個事件處理器。
-        document.getElementById("passengerForm").addEventListener("submit", async function (event) {
-            // 阻止表單的預設提交行為
-            event.preventDefault();
+    <p style="text-align:center; margin-top:14px;">
+        <a href="/" class="muted">取消，回首頁</a>
+    </p>
+</div>
+{% endblock %}
 
-            // 取得表單元素，並使用 FormData 物件來收集表單資料
-            const form = event.target;
-            const formData = new FormData(form);
+{% block scripts %}
+<script>
+    // 監聽 passengerForm 的 submit 事件，當表單被提交時，會觸發這個事件處理器。
+    document.getElementById("passengerForm").addEventListener("submit", async function (event) {
+        // 阻止表單的預設提交行為
+        event.preventDefault();
 
-            // 將 FormData 物件轉換成一般的 JavaScript 物件，
-            // 這樣我們就可以把它轉成 JSON 格式
-            const data = Object.fromEntries(formData.entries());
+        // 取得表單元素，並使用 FormData 物件來收集表單資料
+        const form = event.target;
+        const formData = new FormData(form);
 
-            // 請求新增乘客
-            const response = await fetch("/api/passengers", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify(data)
-            });
+        // 將 FormData 物件轉換成一般的 JavaScript 物件，
+        // 這樣我們就可以把它轉成 JSON 格式
+        const data = Object.fromEntries(formData.entries());
 
-            // 取得回應
-            const result = await response.json();
-
-            // 如果新增失敗，會取得 error 屬性，顯示錯誤訊息給使用者
-            if (!response.ok) {
-                alert(result.error);
-                return;
-            }
-
-            alert("新增成功");
-
-            // 修改成功後，回到首頁
-            window.location.href = "/";
+        // 請求新增乘客
+        const response = await fetch("/api/passengers", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(data)
         });
-    </script>
-</body>
 
-</html>
+        // 取得回應
+        const result = await response.json();
+
+        // 如果新增失敗，會取得 error 屬性，顯示錯誤訊息給使用者
+        if (!response.ok) {
+            alert(result.error);
+            return;
+        }
+
+        alert("新增成功");
+
+        // 新增成功後，回到首頁
+        window.location.href = "/";
+    });
+</script>
+{% endblock %}

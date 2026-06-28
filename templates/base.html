@@ -121,6 +121,49 @@
             margin-top: 4px;
         }
 
+        textarea {
+            width: 100%;
+            padding: 10px 12px;
+            background: #fff;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            margin-top: 4px;
+            font-family: inherit;
+            font-size: 0.95rem;
+            resize: vertical;
+            min-height: 90px;
+        }
+
+        /* 兩欄表單版面（design system 表單） */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px 20px;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .field.full {
+            grid-column: 1 / -1;
+        }
+
+        .field label {
+            margin: 0 0 6px;
+            font-weight: 700;
+            color: var(--fg);
+            font-size: 0.92rem;
+        }
+
+        .field input,
+        .field select,
+        .field textarea {
+            max-width: none;
+            margin-top: 0;
+        }
+
         button {
             margin-top: 16px;
             padding: 9px 18px;
@@ -130,6 +173,12 @@
             color: #fff;
             cursor: pointer;
             white-space: nowrap;
+        }
+
+        /* 全寬主要按鈕（表單送出） */
+        .btn-block {
+            width: 100%;
+            text-align: center;
         }
 
         button:disabled {
@@ -276,6 +325,10 @@
             .sidebar nav a {
                 padding: 10px 12px;
             }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
     {% block head %}{% endblock %}
@@ -290,10 +343,10 @@
     <div class="shell">
         <aside class="sidebar">
             <nav>
-                <a href="/"{% if active_page == 'home' %} class="active"{% endif %}>首頁</a>
-                <a href="/ml/train"{% if active_page == 'train' %} class="active"{% endif %}>訓練</a>
-                <a href="/ml/models"{% if active_page == 'models' %} class="active"{% endif %}>模型</a>
-                <a href="/ml/predict"{% if active_page == 'predict' %} class="active"{% endif %}>預測</a>
+                <a href="/"{% if active_page == 'home' %} class="active"{% endif %}>DATAS</a>
+                <a href="/ml/train"{% if active_page == 'train' %} class="active"{% endif %}>TRAIN</a>
+                <a href="/ml/models"{% if active_page == 'models' %} class="active"{% endif %}>MODELS</a>
+                <a href="/ml/predict"{% if active_page == 'predict' %} class="active"{% endif %}>PREDICT</a>
             </nav>
         </aside>
 

@@ -48,12 +48,12 @@ def index_page():
 # 新增乘客頁面
 @app.route("/passengers/new")
 def new_passenger_page():
-    return render_template("new.html")
+    return render_template("new.html", active_page="home")
 
 # 編輯乘客頁面
 @app.route("/passengers/<int:passenger_id>/edit")
 def edit_passenger_page(passenger_id):
-    return render_template("edit.html", passenger_id=passenger_id)
+    return render_template("edit.html", passenger_id=passenger_id, active_page="home")
 
 
 # ============================================================
