@@ -20,7 +20,7 @@
                 <th>Accuracy</th>
                 <th>建立時間</th>
                 <th>狀態</th>
-                <th></th>
+                <th style="text-align:right;">操作</th>
             </tr>
         </thead>
         <tbody id="modelsBody"></tbody>
@@ -90,22 +90,41 @@
         return td;
     }
 
+    // 行內操作圖示（feather 風格）：設為 active=打勾圈、刪除=垃圾桶。
+    const ICON_ACTIVATE = `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+            <polyline points="22 4 12 14.01 9 11.01" />
+        </svg>`;
+
+    const ICON_DELETE = `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6" />
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+        </svg>`;
+
     function actionCell(model) {
         const td = document.createElement("td");
         const actions = document.createElement("div");
         actions.className = "actions";
+        actions.style.justifyContent = "flex-end";
 
         // 非 active 模型才提供「設為 active」
         if (!model.is_active) {
             const activateBtn = document.createElement("button");
-            activateBtn.textContent = "設為 active";
+            activateBtn.className = "icon-btn";
+            activateBtn.title = "設為 active";
+            activateBtn.innerHTML = ICON_ACTIVATE;
             activateBtn.addEventListener("click", () => activate(model.id, activateBtn));
             actions.appendChild(activateBtn);
         }
 
         const deleteBtn = document.createElement("button");
-        deleteBtn.textContent = "刪除";
-        deleteBtn.className = "danger";
+        deleteBtn.className = "icon-btn danger";
+        deleteBtn.title = "刪除";
+        deleteBtn.innerHTML = ICON_DELETE;
         deleteBtn.addEventListener("click", () => removeModel(model, deleteBtn));
         actions.appendChild(deleteBtn);
 
