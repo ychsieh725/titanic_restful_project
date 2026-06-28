@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block title %}訓練模型 — Titanic ML{% endblock %}
+
+{% block content %}
+<h1>訓練模型</h1>
+
+<div class="card">
+    <label for="algorithm">演算法</label>
+    <select id="algorithm">
+        <option value="logistic_regression">Logistic Regression</option>
+        <option value="random_forest">Random Forest</option>
+    </select>
+
+    <div>
+        <button id="trainBtn" type="button">開始訓練</button>
+    </div>
+    <p id="hint" class="muted">送出後會以非同步 job 訓練（含 GridSearchCV 超參數搜尋），下方即時顯示狀態。</p>
+</div>
+
+<div class="card" id="statusCard" hidden>
+    <h2 style="font-size:1.1rem;">Job 狀態</h2>
+    <p>Job ID：<code id="jobId"></code></p>
+    <p>狀態：<strong id="jobStatus"></strong> <span id="jobProgress" class="muted"></span></p>
+
+    <div id="resultBox" hidden>
+        <h3 style="font-size:1rem;">最佳超參數</h3>
+        <pre id="bestParams"></pre>
+        <h3 style="font-size:1rem;">測試集指標</h3>
+        <pre id="metrics"></pre>
+    </div>
+
+    <p id="errorBox" class="bad" hidden></p>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const trainBtn = document.getElementById("trainBtn");
+    const statusCard = document.getElementById("statusCard");
+    const jobIdEl = document.getElementById("jobId");
+    const jobStatusEl = document.getElementById("jobStatus");
+    const jobProgressEl = document.getElementById("jobProgress");
+    const resultBox = document.getElementById("resultBox");
+    const bestParamsEl = document.getElementById("bestParams");
+    const metricsEl = document.getElementById("metrics");
+    const errorBox = document.getElementById("errorBox");
+
+    const POLL_INTERVAL_MS = 1500;
+
+    trainBtn.addEventListener("click", async () => {
+        const algorithm = document.getElementById("algorithm").value;
+        resetStatus();
+        trainBtn.disabled = true;
+
+        try {
+            const response = await fetch("/api/ml/train", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ algorithm }),
+            });
+            const body = await response.json();
+            if (!response.ok) {
+                showError(body.error || "訓練啟動失敗");
+                trainBtn.disabled = false;
+                return;
+            }
+            jobIdEl.textContent = body.job_id;
+            jobStatusEl.textContent = body.status;
+            pollStatus(body.job_id);
+        } catch (err) {
+            showError("無法連線到伺服器：" + err.message);
+            trainBtn.disabled = false;
+        }
+    });
+
+    async function pollStatus(jobId) {
+        try {
+            const response = await fetch(`/api/ml/train/status/${jobId}`);
+            const body = await response.json();
+            jobStatusEl.textContent = body.status;
+            jobProgressEl.textContent = body.progress ? `（${body.progress}）` : "";
+
+            if (body.status === "done") {
+                showResult(body.result);
+                trainBtn.disabled = false;
+                return;
+            }
+            if (body.status === "failed") {
+                showError(body.error_message || "訓練失敗");
+                trainBtn.disabled = false;
+                return;
+            }
+            setTimeout(() => pollStatus(jobId), POLL_INTERVAL_MS);
+        } catch (err) {
+            showError("輪詢狀態失敗：" + err.message);
+            trainBtn.disabled = false;
+        }
+    }
+
+    function showResult(result) {
+        if (!result) return;
+        resultBox.hidden = false;
+        bestParamsEl.textContent = JSON.stringify(result.best_params, null, 2);
+        metricsEl.textContent = JSON.stringify(result.metrics, null, 2);
+    }
+
+    function showError(message) {
+        errorBox.hidden = false;
+        errorBox.textContent = message;
+    }
+
+    function resetStatus() {
+        statusCard.hidden = false;
+        resultBox.hidden = true;
+        errorBox.hidden = true;
+        jobProgressEl.textContent = "";
+    }
+</script>
+{% endblock %}

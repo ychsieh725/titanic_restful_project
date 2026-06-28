@@ -1,0 +1,243 @@
+{% extends "base.html" %}
+
+{% block title %}預測 — Titanic ML{% endblock %}
+
+{% block content %}
+<h1>生存預測</h1>
+
+<!-- 單筆預測 -->
+<div class="card">
+    <h2 style="font-size:1.1rem;">單筆預測</h2>
+    <form id="singleForm">
+        <label>Pclass</label>
+        <select name="Pclass" required>
+            <option value="1">1 等艙</option>
+            <option value="2">2 等艙</option>
+            <option value="3" selected>3 等艙</option>
+        </select>
+
+        <label>Sex</label>
+        <select name="Sex" required>
+            <option value="male">male</option>
+            <option value="female">female</option>
+        </select>
+
+        <label>Name</label>
+        <input name="Name" value="Doe, Mr. John" required>
+
+        <label>Ticket</label>
+        <input name="Ticket" value="A/5 21171" required>
+
+        <label>SibSp</label>
+        <input name="SibSp" type="number" min="0" value="0" required>
+
+        <label>Parch</label>
+        <input name="Parch" type="number" min="0" value="0" required>
+
+        <label>Age</label>
+        <input name="Age" type="number" step="0.01" value="29">
+
+        <label>Fare</label>
+        <input name="Fare" type="number" step="0.0001" min="0" value="7.25">
+
+        <label>Cabin</label>
+        <input name="Cabin">
+
+        <label>Embarked</label>
+        <select name="Embarked">
+            <option value="">未知</option>
+            <option value="C">C</option>
+            <option value="Q">Q</option>
+            <option value="S" selected>S</option>
+        </select>
+
+        <div>
+            <button type="submit">預測</button>
+        </div>
+    </form>
+
+    <p id="singleResult" hidden></p>
+    <p id="singleError" class="bad" hidden></p>
+</div>
+
+<!-- CSV 批次預測 -->
+<div class="card">
+    <h2 style="font-size:1.1rem;">CSV 批次預測</h2>
+    <p class="muted">上傳含 Pclass, Sex, Name, Ticket, SibSp, Parch, Age, Fare, Cabin, Embarked 欄位的 CSV。</p>
+    <form id="batchForm">
+        <input type="file" name="file" accept=".csv" required>
+        <div>
+            <button type="submit">上傳並預測</button>
+            <button type="button" id="downloadBtn" disabled>下載結果 CSV</button>
+        </div>
+    </form>
+
+    <p id="batchError" class="bad" hidden></p>
+    <p id="batchSummary" class="muted" hidden></p>
+
+    <table id="batchTable" hidden>
+        <thead id="batchHead"></thead>
+        <tbody id="batchBody"></tbody>
+    </table>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // --- 單筆 ---------------------------------------------------------
+    const singleForm = document.getElementById("singleForm");
+    const singleResult = document.getElementById("singleResult");
+    const singleError = document.getElementById("singleError");
+
+    singleForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        singleResult.hidden = true;
+        singleError.hidden = true;
+
+        const data = toTypedObject(new FormData(singleForm));
+        try {
+            const response = await fetch("/api/ml/predict", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data),
+            });
+            const body = await response.json();
+            if (!response.ok) {
+                singleError.hidden = false;
+                singleError.textContent = formatError(body);
+                return;
+            }
+            singleResult.hidden = false;
+            singleResult.className = body.survived ? "ok" : "bad";
+            const pct = (body.probability * 100).toFixed(1);
+            singleResult.textContent = `${body.survived ? "生還 ✅" : "未生還 ❌"}（生存機率 ${pct}%）`;
+        } catch (err) {
+            singleError.hidden = false;
+            singleError.textContent = "無法連線到伺服器：" + err.message;
+        }
+    });
+
+    // 空字串視為缺值（None）；數值欄轉成 number，交由後端共用管線/驗證處理。
+    function toTypedObject(formData) {
+        const numeric = new Set(["Pclass", "SibSp", "Parch", "Age", "Fare"]);
+        const data = {};
+        for (const [key, value] of formData.entries()) {
+            if (value === "") { data[key] = null; continue; }
+            data[key] = numeric.has(key) ? Number(value) : value;
+        }
+        return data;
+    }
+
+    function formatError(body) {
+        if (body.fields) {
+            return Object.values(body.fields).join("；");
+        }
+        return body.error || "預測失敗";
+    }
+
+    // --- CSV 批次 -----------------------------------------------------
+    const batchForm = document.getElementById("batchForm");
+    const batchError = document.getElementById("batchError");
+    const batchSummary = document.getElementById("batchSummary");
+    const batchTable = document.getElementById("batchTable");
+    const batchHead = document.getElementById("batchHead");
+    const batchBody = document.getElementById("batchBody");
+    const downloadBtn = document.getElementById("downloadBtn");
+
+    let lastFile = null;
+
+    batchForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        resetBatch();
+
+        const fileInput = batchForm.querySelector('input[type="file"]');
+        if (!fileInput.files.length) return;
+        lastFile = fileInput.files[0];
+
+        try {
+            const response = await fetch("/api/ml/predict/batch", {
+                method: "POST",
+                body: buildFormData(lastFile),
+            });
+            const body = await response.json();
+            if (!response.ok) {
+                batchError.hidden = false;
+                batchError.textContent = formatBatchError(body);
+                return;
+            }
+            renderBatch(body.results || []);
+            batchSummary.hidden = false;
+            batchSummary.textContent = `共 ${body.total} 筆預測完成。`;
+            downloadBtn.disabled = false;
+        } catch (err) {
+            batchError.hidden = false;
+            batchError.textContent = "無法連線到伺服器：" + err.message;
+        }
+    });
+
+    downloadBtn.addEventListener("click", async () => {
+        if (!lastFile) return;
+        const response = await fetch("/api/ml/predict/batch?format=csv", {
+            method: "POST",
+            body: buildFormData(lastFile),
+        });
+        if (!response.ok) return;
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "predictions.csv";
+        link.click();
+        URL.revokeObjectURL(url);
+    });
+
+    function buildFormData(file) {
+        const formData = new FormData();
+        formData.append("file", file);
+        return formData;
+    }
+
+    function formatBatchError(body) {
+        if (body.rows) {
+            return body.rows
+                .map((r) => `第 ${r.row + 1} 列：` + Object.values(r.fields).join("、"))
+                .join("\n");
+        }
+        return body.error || "批次預測失敗";
+    }
+
+    function renderBatch(rows) {
+        if (rows.length === 0) return;
+        batchTable.hidden = false;
+        const columns = Object.keys(rows[0]);
+
+        const headRow = document.createElement("tr");
+        for (const col of columns) {
+            const th = document.createElement("th");
+            th.textContent = col;
+            headRow.appendChild(th);
+        }
+        batchHead.appendChild(headRow);
+
+        for (const row of rows) {
+            const tr = document.createElement("tr");
+            for (const col of columns) {
+                const td = document.createElement("td");
+                const value = row[col];
+                td.textContent = value === null || value === undefined ? "—" : value;
+                tr.appendChild(td);
+            }
+            batchBody.appendChild(tr);
+        }
+    }
+
+    function resetBatch() {
+        batchError.hidden = true;
+        batchSummary.hidden = true;
+        batchTable.hidden = true;
+        batchHead.innerHTML = "";
+        batchBody.innerHTML = "";
+        downloadBtn.disabled = true;
+    }
+</script>
+{% endblock %}
