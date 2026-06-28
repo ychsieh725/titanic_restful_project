@@ -38,7 +38,8 @@
 
         nav .brand {
             font-weight: 700;
-            margin-right: 16px;
+            /* 把品牌留在左側，其餘連結推到右側 */
+            margin-right: auto;
         }
 
         nav a {
@@ -46,6 +47,8 @@
             border-radius: 6px;
             text-decoration: none;
             color: var(--fg);
+            /* 預留與 active 底線等高的透明邊框，避免切換時版面跳動 */
+            border-bottom: 2px solid transparent;
         }
 
         nav a:hover {
@@ -53,8 +56,10 @@
         }
 
         nav a.active {
-            background: var(--brand);
-            color: #fff;
+            color: var(--brand);
+            font-weight: 600;
+            border-bottom-color: var(--brand);
+            border-radius: 0;
         }
 
         main {
