@@ -9,55 +9,77 @@
 <div class="card">
     <h2 style="font-size:1.1rem;">單筆預測</h2>
     <form id="singleForm">
-        <label>Pclass</label>
-        <select name="Pclass" required>
-            <option value="1">1 等艙</option>
-            <option value="2">2 等艙</option>
-            <option value="3" selected>3 等艙</option>
-        </select>
+        <div class="form-grid">
+            <div class="field full">
+                <label>Name <span class="zh">姓名</span></label>
+                <input name="Name" value="Doe, Mr. John" required>
+            </div>
 
-        <label>Sex</label>
-        <select name="Sex" required>
-            <option value="male">male</option>
-            <option value="female">female</option>
-        </select>
+            <div class="field">
+                <label>Pclass <span class="zh">艙等</span></label>
+                <select name="Pclass" required>
+                    <option value="1">1 等艙</option>
+                    <option value="2">2 等艙</option>
+                    <option value="3" selected>3 等艙</option>
+                </select>
+            </div>
 
-        <label>Name</label>
-        <input name="Name" value="Doe, Mr. John" required>
+            <div class="field">
+                <label>Sex <span class="zh">性別</span></label>
+                <select name="Sex" required>
+                    <option value="male">male</option>
+                    <option value="female">female</option>
+                </select>
+            </div>
 
-        <label>Ticket</label>
-        <input name="Ticket" value="A/5 21171" required>
+            <div class="field">
+                <label>Embarked <span class="zh">登船港口</span></label>
+                <select name="Embarked">
+                    <option value="">未知</option>
+                    <option value="C">C</option>
+                    <option value="Q">Q</option>
+                    <option value="S" selected>S</option>
+                </select>
+            </div>
 
-        <label>SibSp</label>
-        <input name="SibSp" type="number" min="0" value="0" required>
+            <div class="field">
+                <label>Age <span class="zh">年齡</span></label>
+                <input name="Age" type="number" step="0.01" min="0" max="120" value="29">
+            </div>
 
-        <label>Parch</label>
-        <input name="Parch" type="number" min="0" value="0" required>
+            <div class="field">
+                <label>Fare <span class="zh">票價</span></label>
+                <input name="Fare" type="number" step="0.0001" min="0" value="7.25">
+            </div>
 
-        <label>Age</label>
-        <input name="Age" type="number" step="0.01" value="29">
+            <div class="field">
+                <label>SibSp <span class="zh">兄弟姊妹/配偶</span></label>
+                <input name="SibSp" type="number" min="0" value="0" required>
+            </div>
 
-        <label>Fare</label>
-        <input name="Fare" type="number" step="0.0001" min="0" value="7.25">
+            <div class="field">
+                <label>Parch <span class="zh">父母/子女</span></label>
+                <input name="Parch" type="number" min="0" value="0" required>
+            </div>
 
-        <label>Cabin</label>
-        <input name="Cabin">
+            <div class="field">
+                <label>Ticket <span class="zh">票號</span></label>
+                <input name="Ticket" value="A/5 21171" required>
+            </div>
 
-        <label>Embarked</label>
-        <select name="Embarked">
-            <option value="">未知</option>
-            <option value="C">C</option>
-            <option value="Q">Q</option>
-            <option value="S" selected>S</option>
-        </select>
+            <div class="field">
+                <label>Cabin <span class="zh">艙房</span></label>
+                <input name="Cabin">
+            </div>
 
-        <div>
-            <button type="submit">預測</button>
+            <div class="field full">
+                <button type="submit" class="btn-block">預測</button>
+            </div>
         </div>
     </form>
 
-    <p id="singleResult" hidden></p>
-    <p id="singleError" class="bad" hidden></p>
+    <p id="singleResult" hidden style="margin-top:14px;"></p>
+    <p id="singleError" class="bad" hidden style="margin-top:14px;"></p>
 </div>
 
 <!-- CSV 批次預測 -->
