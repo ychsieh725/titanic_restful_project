@@ -32,10 +32,16 @@
         <tbody id="passengerTableBody"></tbody>
     </table>
 
-    <div class="pagination" style="display:flex; gap:8px; align-items:center; margin-top:16px;">
-        <button type="button" onclick="prevPage()">上一頁</button>
-        <span id="pageInfo" class="muted"></span>
-        <button type="button" onclick="nextPage()">下一頁</button>
+    <div class="pagination" style="display:flex; gap:8px; align-items:center; margin-top:16px; flex-wrap:wrap;">
+        <button type="button" id="firstBtn" onclick="goToPage(1)">第一頁</button>
+        <button type="button" id="prevBtn" onclick="goToPage(currentPage - 1)">上一頁</button>
+        <span class="muted">第</span>
+        <input type="number" id="pageInput" min="1" style="width:70px; margin-top:0;"
+            onkeydown="if (event.key === 'Enter') jumpToInput()">
+        <span class="muted">頁 / 共 <span id="totalPages">0</span> 頁</span>
+        <button type="button" onclick="jumpToInput()">跳轉</button>
+        <button type="button" id="nextBtn" onclick="goToPage(currentPage + 1)">下一頁</button>
+        <button type="button" id="lastBtn" onclick="goToPage(getTotalPages())">最後一頁</button>
     </div>
 </div>
 {% endblock %}
@@ -119,35 +125,38 @@
         }
     }
 
-    // 顯示分頁資訊
+    // 計算總頁數（至少 1 頁，避免無資料時除出 0）。
+    function getTotalPages() {
+        return Math.max(1, Math.ceil(total / perPage));
+    }
+
+    // 跳到指定頁：超出範圍時自動夾到 [1, 總頁數]，再載入該頁。
+    function goToPage(page) {
+        const target = Math.min(Math.max(page, 1), getTotalPages());
+        loadPassengers(target);
+    }
+
+    // 讀取頁碼輸入框的值並跳轉；非數字則忽略。
+    function jumpToInput() {
+        const value = parseInt(document.getElementById("pageInput").value, 10);
+        if (Number.isNaN(value)) {
+            return;
+        }
+        goToPage(value);
+    }
+
+    // 顯示分頁資訊：更新總頁數、輸入框預設值，並依邊界停用首尾/上下頁按鈕。
     function renderPagination(page, perPage, total) {
-        const totalPages = Math.ceil(total / perPage);
+        const totalPages = getTotalPages();
 
-        document.getElementById("summary").textContent =
-            `共有 ${total} 筆資料`;
+        document.getElementById("summary").textContent = `共有 ${total} 筆資料`;
+        document.getElementById("totalPages").textContent = totalPages;
+        document.getElementById("pageInput").value = page;
 
-        document.getElementById("pageInfo").textContent =
-            `第 ${page} 頁 / 共 ${totalPages} 頁`;
-    }
-
-    // 當使用者點擊「上一頁」按鈕時，會呼叫這個函式。
-    // 這個函式會檢查目前的頁碼是否大於 1，
-    // 如果是，就呼叫 loadPassengers 函式，載入前一頁的資料。
-    function prevPage() {
-        if (currentPage > 1) {
-            loadPassengers(currentPage - 1);
-        }
-    }
-
-    // 當使用者點擊「下一頁」按鈕時，會呼叫這個函式。
-    // 這個函式會先計算總頁數，然後檢查目前的頁碼是否小於總頁數，
-    // 如果是，就呼叫 loadPassengers 函式，載入下一頁的資料。
-    function nextPage() {
-        const totalPages = Math.ceil(total / perPage);
-
-        if (currentPage < totalPages) {
-            loadPassengers(currentPage + 1);
-        }
+        document.getElementById("firstBtn").disabled = page <= 1;
+        document.getElementById("prevBtn").disabled = page <= 1;
+        document.getElementById("nextBtn").disabled = page >= totalPages;
+        document.getElementById("lastBtn").disabled = page >= totalPages;
     }
 
     // 刪除的乘客 (透過 passengerId)。
