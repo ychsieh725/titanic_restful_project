@@ -10,7 +10,21 @@
         <div class="form-grid">
             <div class="field full">
                 <label>Name</label>
-                <input name="Name" placeholder="例：Braund, Mr. Owen Harris" required>
+                <div style="display:flex; gap:8px;">
+                    <input name="Name" placeholder="例：Braund, Mr. Owen Harris" required style="flex:1;">
+                    <button type="button" id="randomNameBtn" title="依目前 Sex 隨機產生姓名"
+                        style="margin-top:0; background:var(--panel); color:var(--fg); display:inline-flex; align-items:center; gap:6px;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="16 3 21 3 21 8" />
+                            <line x1="4" y1="20" x2="21" y2="3" />
+                            <polyline points="21 16 21 21 16 21" />
+                            <line x1="15" y1="15" x2="21" y2="21" />
+                            <line x1="4" y1="4" x2="9" y2="9" />
+                        </svg>
+                        隨機
+                    </button>
+                </div>
             </div>
 
             <div class="field">
@@ -92,6 +106,41 @@
 
 {% block scripts %}
 <script>
+    // --- 隨機姓名產生 -------------------------------------------------
+    // 格式對齊資料集：「Surname, Title. First」，稱謂依目前選的 Sex 而定，
+    // 使萃取出的 Title 與 Sex 一致（呼應特徵工程的 Title 規則）。
+    const SURNAMES = [
+        "Braund", "Cumings", "Heikkinen", "Futrelle", "Allen", "Moran",
+        "McCarthy", "Palsson", "Johnson", "Nasser", "Sandstrom", "Bonnell",
+        "Andersson", "Hewlett", "Rice", "Williams", "Vander Planke", "Masselmani",
+        "Fortune", "Beesley", "Sloper", "Asplund", "Harper", "Goodwin",
+    ];
+    const MALE_FIRST = [
+        "Owen Harris", "William Henry", "James", "Timothy J", "Gosta Leonard",
+        "Anders Johan", "Charles Eugene", "William Thompson", "Edward H", "Lawrence",
+    ];
+    const FEMALE_FIRST = [
+        "Laina", "Lily May", "Elisabeth Vilhelmina", "Hulda Amanda", "Anna",
+        "Margaret Norton", "Marguerite Rut", "Torborg Danira", "Fatima", "Adele Kiamie",
+    ];
+    const MALE_TITLES = ["Mr", "Master"];
+    const FEMALE_TITLES = ["Mrs", "Miss"];
+
+    function randomItem(items) {
+        return items[Math.floor(Math.random() * items.length)];
+    }
+
+    function generateName() {
+        const isFemale = document.querySelector('select[name="Sex"]').value === "female";
+        const title = randomItem(isFemale ? FEMALE_TITLES : MALE_TITLES);
+        const first = randomItem(isFemale ? FEMALE_FIRST : MALE_FIRST);
+        return `${randomItem(SURNAMES)}, ${title}. ${first}`;
+    }
+
+    document.getElementById("randomNameBtn").addEventListener("click", function () {
+        document.querySelector('input[name="Name"]').value = generateName();
+    });
+
     // 監聽 passengerForm 的 submit 事件，當表單被提交時，會觸發這個事件處理器。
     document.getElementById("passengerForm").addEventListener("submit", async function (event) {
         // 阻止表單的預設提交行為
