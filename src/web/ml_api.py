@@ -19,6 +19,7 @@ from src.ml import config
 from src.ml.jobs import JobStore, job_store, start_training_job
 from src.ml.prediction import NoActiveModelError, predict_batch, predict_one
 from src.ml.registry import (
+    delete_model,
     get_model_by_uid,
     list_models,
     set_active_model,
@@ -92,6 +93,13 @@ def create_ml_blueprint(
         if metadata is None:
             return jsonify({"error": f"找不到模型：{model_id}"}), 404
         return jsonify({"model": _metadata_payload(metadata)}), 200
+
+    @blueprint.delete("/models/<int:model_id>")
+    def remove_model(model_id: int):
+        metadata = delete_model(model_id, db_path=db_path)
+        if metadata is None:
+            return jsonify({"error": f"找不到模型：{model_id}"}), 404
+        return jsonify({"deleted": _metadata_payload(metadata)}), 200
 
     @blueprint.post("/predict")
     def predict():

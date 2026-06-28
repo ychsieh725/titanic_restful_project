@@ -160,6 +160,39 @@ def set_active_model(
     return _row_to_metadata(row)
 
 
+def delete_model(
+    model_id: int,
+    db_path: str | None = None,
+) -> Optional[ModelMetadata]:
+    """刪除指定模型的 DB 列與其 joblib 檔，回傳被刪除的 metadata。
+
+    先讀回 metadata 以取得 file_path，再刪 DB 列、清模型檔（檔案不存在不報錯）。
+    刪除 active 模型後即無 active 模型，預測端會據此回提示（FR-4.5），屬預期行為。
+
+    Args:
+        model_id: 目標模型 id。
+        db_path: SQLite 路徑；省略時用 config.DATABASE_PATH。
+
+    Returns:
+        被刪除的 ModelMetadata；目標不存在時回 None（不變更任何資料）。
+    """
+    path = str(db_path or config.DATABASE_PATH)
+    connection = sqlite3.connect(path)
+    connection.row_factory = sqlite3.Row
+    try:
+        row = connection.execute(_SELECT_BY_ID_SQL, (model_id,)).fetchone()
+        if row is None:
+            return None
+        metadata = _row_to_metadata(row)
+        with connection:  # 交易：DB 列刪除
+            connection.execute("DELETE FROM ml_model WHERE id = ?", (model_id,))
+    finally:
+        connection.close()
+
+    Path(metadata.file_path).unlink(missing_ok=True)
+    return metadata
+
+
 def _row_to_metadata(row: sqlite3.Row) -> ModelMetadata:
     """sqlite Row → ModelMetadata，還原 JSON 欄、布林與時間型別。"""
     return ModelMetadata(

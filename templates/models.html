@@ -85,19 +85,31 @@
 
     function statusCell(isActive) {
         const td = document.createElement("td");
-        td.textContent = isActive ? "✅ active" : "—";
+        td.textContent = isActive ? "active" : "—";
         td.className = isActive ? "ok" : "muted";
         return td;
     }
 
     function actionCell(model) {
         const td = document.createElement("td");
-        if (model.is_active) return td;
-        const btn = document.createElement("button");
-        btn.textContent = "設為 active";
-        btn.style.marginTop = "0";
-        btn.addEventListener("click", () => activate(model.id, btn));
-        td.appendChild(btn);
+        const actions = document.createElement("div");
+        actions.className = "actions";
+
+        // 非 active 模型才提供「設為 active」
+        if (!model.is_active) {
+            const activateBtn = document.createElement("button");
+            activateBtn.textContent = "設為 active";
+            activateBtn.addEventListener("click", () => activate(model.id, activateBtn));
+            actions.appendChild(activateBtn);
+        }
+
+        const deleteBtn = document.createElement("button");
+        deleteBtn.textContent = "刪除";
+        deleteBtn.className = "danger";
+        deleteBtn.addEventListener("click", () => removeModel(model, deleteBtn));
+        actions.appendChild(deleteBtn);
+
+        td.appendChild(actions);
         return td;
     }
 
@@ -108,6 +120,27 @@
             const body = await response.json();
             if (!response.ok) {
                 showError(body.error || "切換 active 失敗");
+                btn.disabled = false;
+                return;
+            }
+            loadModels();
+        } catch (err) {
+            showError("無法連線到伺服器：" + err.message);
+            btn.disabled = false;
+        }
+    }
+
+    async function removeModel(model, btn) {
+        const label = model.is_active ? "（這是目前 active 模型）" : "";
+        if (!confirm(`確定要刪除模型 #${model.id} ${model.algorithm}？${label}`)) {
+            return;
+        }
+        btn.disabled = true;
+        try {
+            const response = await fetch(`/api/ml/models/${model.id}`, { method: "DELETE" });
+            const body = await response.json();
+            if (!response.ok) {
+                showError(body.error || "刪除模型失敗");
                 btn.disabled = false;
                 return;
             }

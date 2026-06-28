@@ -14,6 +14,7 @@ import pytest
 
 from src.ml import config
 from src.ml.registry import (
+    delete_model,
     get_active_model,
     get_model_by_uid,
     list_models,
@@ -123,6 +124,37 @@ def test_get_model_by_uid_returns_metadata(trained) -> None:
 def test_get_model_by_uid_missing_returns_none(trained) -> None:
     _, _, db_path, _, _ = trained
     assert get_model_by_uid("does-not-exist", db_path=db_path) is None
+
+
+# --- delete_model ---------------------------------------------------------
+
+def test_delete_model_removes_row_and_file(trained) -> None:
+    pipeline, result, db_path, models_dir, _ = trained
+    metadata = save_model(pipeline, result, db_path=db_path, models_dir=models_dir)
+    model_file = models_dir / f"{result.model_uid}.joblib"
+    assert model_file.exists()
+
+    deleted = delete_model(metadata.id, db_path=db_path)
+
+    assert deleted is not None
+    assert deleted.id == metadata.id
+    assert not model_file.exists()                       # joblib 檔已清除
+    assert get_model_by_uid(result.model_uid, db_path=db_path) is None  # DB 列已刪
+
+
+def test_delete_model_missing_returns_none(trained) -> None:
+    _, _, db_path, _, _ = trained
+    assert delete_model(999, db_path=db_path) is None
+
+
+def test_delete_active_model_leaves_no_active(trained) -> None:
+    pipeline, result, db_path, models_dir, _ = trained
+    metadata = save_model(pipeline, result, db_path=db_path, models_dir=models_dir)
+    set_active_model(metadata.id, db_path=db_path)
+
+    delete_model(metadata.id, db_path=db_path)
+
+    assert get_active_model(db_path=db_path) is None
 
 
 # --- UNIQUE(model_uid) ----------------------------------------------------

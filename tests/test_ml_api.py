@@ -221,6 +221,26 @@ def test_activate_switches_active_model(seeded_db) -> None:
     assert actives == [id2]
 
 
+def test_delete_model_returns_200_and_removes_from_list(seeded_db) -> None:
+    db_path, models_dir = seeded_db
+    keep = _seed_model(db_path, "uid-keep")
+    drop = _seed_model(db_path, "uid-drop")
+    client = _make_client(db_path, models_dir)
+
+    response = client.delete(f"/api/ml/models/{drop}")
+    assert response.status_code == 200
+
+    remaining = {m["id"] for m in client.get("/api/ml/models").get_json()["models"]}
+    assert remaining == {keep}
+
+
+def test_delete_missing_model_returns_404(seeded_db) -> None:
+    db_path, models_dir = seeded_db
+    client = _make_client(db_path, models_dir)
+    response = client.delete("/api/ml/models/999")
+    assert response.status_code == 404
+
+
 # --- 單筆預測（6.1）------------------------------------------------------
 
 def _train_and_activate(seeded_db) -> None:
