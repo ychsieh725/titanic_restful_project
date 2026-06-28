@@ -12,7 +12,21 @@
         <div class="form-grid">
             <div class="field full">
                 <label>Name <span class="zh">姓名</span></label>
-                <input name="Name" value="Doe, Mr. John" required>
+                <div style="display:flex; gap:8px;">
+                    <input name="Name" value="Doe, Mr. John" required style="flex:1;">
+                    <button type="button" data-random="name" title="依目前 Sex 隨機產生姓名"
+                        style="margin-top:0; background:var(--panel); color:var(--fg); display:inline-flex; align-items:center; gap:6px;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="16 3 21 3 21 8" />
+                            <line x1="4" y1="20" x2="21" y2="3" />
+                            <polyline points="21 16 21 21 16 21" />
+                            <line x1="15" y1="15" x2="21" y2="21" />
+                            <line x1="4" y1="4" x2="9" y2="9" />
+                        </svg>
+                        隨機
+                    </button>
+                </div>
             </div>
 
             <div class="field">
@@ -64,12 +78,36 @@
 
             <div class="field">
                 <label>Ticket <span class="zh">票號</span></label>
-                <input name="Ticket" value="A/5 21171" required>
+                <div style="display:flex; gap:8px;">
+                    <input name="Ticket" value="A/5 21171" required style="flex:1;">
+                    <button type="button" data-random="ticket" class="icon-btn" title="隨機產生票號">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="16 3 21 3 21 8" />
+                            <line x1="4" y1="20" x2="21" y2="3" />
+                            <polyline points="21 16 21 21 16 21" />
+                            <line x1="15" y1="15" x2="21" y2="21" />
+                            <line x1="4" y1="4" x2="9" y2="9" />
+                        </svg>
+                    </button>
+                </div>
             </div>
 
             <div class="field">
                 <label>Cabin <span class="zh">艙房</span></label>
-                <input name="Cabin">
+                <div style="display:flex; gap:8px;">
+                    <input name="Cabin" style="flex:1;">
+                    <button type="button" data-random="cabin" class="icon-btn" title="隨機產生艙房">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="16 3 21 3 21 8" />
+                            <line x1="4" y1="20" x2="21" y2="3" />
+                            <polyline points="21 16 21 21 16 21" />
+                            <line x1="15" y1="15" x2="21" y2="21" />
+                            <line x1="4" y1="4" x2="9" y2="9" />
+                        </svg>
+                    </button>
+                </div>
             </div>
 
             <div class="field full">
@@ -108,6 +146,8 @@
 {% endblock %}
 
 {% block scripts %}
+<!-- 隨機產生（姓名/票號/艙房）：與新增乘客頁共用 -->
+<script src="{{ url_for('static', filename='passenger-random.js') }}"></script>
 <script>
     // --- 單筆 ---------------------------------------------------------
     const singleForm = document.getElementById("singleForm");
