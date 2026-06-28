@@ -40,20 +40,25 @@ def row_to_dict(row):
 # 3. 前端頁面 Routes
 # ============================================================
 
-# 首頁
+# 首頁（landing / 功能介紹與教學）
 @app.route("/")
-def index_page():
-    return render_template("index.html", active_page="home")
+def home_page():
+    return render_template("home.html", active_page="home")
+
+# 乘客資料管理（列表）
+@app.route("/passengers")
+def passengers_page():
+    return render_template("index.html", active_page="datas")
 
 # 新增乘客頁面
 @app.route("/passengers/new")
 def new_passenger_page():
-    return render_template("new.html", active_page="home")
+    return render_template("new.html", active_page="datas")
 
 # 編輯乘客頁面
 @app.route("/passengers/<int:passenger_id>/edit")
 def edit_passenger_page(passenger_id):
-    return render_template("edit.html", passenger_id=passenger_id, active_page="home")
+    return render_template("edit.html", passenger_id=passenger_id, active_page="datas")
 
 
 # ============================================================

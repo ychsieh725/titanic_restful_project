@@ -1,0 +1,245 @@
+{% extends "base.html" %}
+
+{% block title %}首頁 — Titanic ML 平台{% endblock %}
+
+{% block head %}
+<style>
+    .hero {
+        background: linear-gradient(135deg, #eef2ff 0%, var(--panel) 100%);
+        border-radius: 20px;
+        padding: 52px 40px;
+        text-align: center;
+        margin-bottom: 28px;
+    }
+
+    .hero h1 {
+        font-size: 2.1rem;
+        margin: 0 0 14px;
+    }
+
+    .hero p {
+        color: var(--muted);
+        max-width: 640px;
+        margin: 0 auto 26px;
+        font-size: 1.05rem;
+        line-height: 1.6;
+    }
+
+    .hero-actions {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .btn-ghost {
+        display: inline-block;
+        padding: 9px 18px;
+        border-radius: 30px;
+        background: #fff;
+        border: 1px solid var(--line);
+        color: var(--fg);
+        text-decoration: none;
+    }
+
+    .btn-ghost:hover {
+        background: var(--panel);
+    }
+
+    .section-title {
+        font-size: 1.25rem;
+        margin: 32px 0 14px;
+    }
+
+    .feature-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 16px;
+    }
+
+    .feature {
+        text-decoration: none;
+        color: inherit;
+        display: block;
+    }
+
+    .feature .feature-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        background: #eef2ff;
+        color: var(--brand);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 10px;
+    }
+
+    .feature .feature-icon svg {
+        width: 22px;
+        height: 22px;
+    }
+
+    .feature h3 {
+        margin: 0 0 6px;
+        font-size: 1.02rem;
+    }
+
+    .feature p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.9rem;
+        line-height: 1.5;
+    }
+
+    .steps {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    .step {
+        display: flex;
+        gap: 14px;
+        align-items: flex-start;
+    }
+
+    .step-num {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: var(--brand);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        flex-shrink: 0;
+    }
+
+    .step-body h3 {
+        margin: 4px 0 4px;
+        font-size: 1rem;
+    }
+
+    .step-body p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.92rem;
+        line-height: 1.5;
+    }
+
+    .step-body a {
+        color: var(--brand);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <h1>Titanic 生存預測機器學習平台</h1>
+    <p>
+        在鐵達尼號乘客資料上，完成從<strong>資料管理</strong>、<strong>模型訓練（含超參數調校）</strong>、
+        <strong>模型管理</strong>到<strong>單筆／批次預測</strong>的端到端機器學習流程。
+        無需寫程式，透過網頁介面即可一鍵訓練並取得生存機率。
+    </p>
+    <div class="hero-actions">
+        <a class="btn" href="/ml/train">開始訓練模型</a>
+        <a class="btn-ghost" href="/ml/predict">立即進行預測</a>
+    </div>
+</section>
+
+<h2 class="section-title">平台功能</h2>
+<div class="feature-grid">
+    <a class="feature card" href="/passengers">
+        <span class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <ellipse cx="12" cy="5" rx="9" ry="3" />
+                <path d="M3 5v14a9 3 0 0 0 18 0V5" />
+                <path d="M3 12a9 3 0 0 0 18 0" />
+            </svg>
+        </span>
+        <h3>資料管理（DATAS）</h3>
+        <p>瀏覽、搜尋、新增、編輯與刪除 891 筆鐵達尼乘客資料，作為訓練來源。</p>
+    </a>
+
+    <a class="feature card" href="/ml/train">
+        <span class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <line x1="4" y1="21" x2="4" y2="14" />
+                <line x1="4" y1="10" x2="4" y2="3" />
+                <line x1="12" y1="21" x2="12" y2="12" />
+                <line x1="12" y1="8" x2="12" y2="3" />
+                <line x1="20" y1="21" x2="20" y2="16" />
+                <line x1="20" y1="12" x2="20" y2="3" />
+                <line x1="1" y1="14" x2="7" y2="14" />
+                <line x1="9" y1="8" x2="15" y2="8" />
+                <line x1="17" y1="16" x2="23" y2="16" />
+            </svg>
+        </span>
+        <h3>模型訓練（TRAIN）</h3>
+        <p>選擇演算法（LR／隨機森林），自訂超參數，以 GridSearchCV 非同步訓練並顯示最佳參數與指標。</p>
+    </a>
+
+    <a class="feature card" href="/ml/models">
+        <span class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="12 2 2 7 12 12 22 7 12 2" />
+                <polyline points="2 17 12 22 22 17" />
+                <polyline points="2 12 12 17 22 12" />
+            </svg>
+        </span>
+        <h3>模型管理（MODELS）</h3>
+        <p>檢視所有已訓練模型的指標，設定 active 模型供預測使用，或刪除不需要的模型。</p>
+    </a>
+
+    <a class="feature card" href="/ml/predict">
+        <span class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <circle cx="12" cy="12" r="6" />
+                <circle cx="12" cy="12" r="2" />
+            </svg>
+        </span>
+        <h3>生存預測（PREDICT）</h3>
+        <p>輸入單筆乘客資料或上傳 CSV 批次預測，取得存活判定與生存機率，並可下載結果。</p>
+    </a>
+</div>
+
+<h2 class="section-title">使用教學</h2>
+<div class="card">
+    <div class="steps">
+        <div class="step">
+            <div class="step-num">1</div>
+            <div class="step-body">
+                <h3>訓練一個模型</h3>
+                <p>到 <a href="/ml/train">TRAIN</a> 選擇演算法（可選填超參數候選值），按「開始訓練」。
+                    系統會以非同步 job 執行，完成後顯示最佳超參數與測試集指標。</p>
+            </div>
+        </div>
+        <div class="step">
+            <div class="step-num">2</div>
+            <div class="step-body">
+                <h3>設定 active 模型</h3>
+                <p>到 <a href="/ml/models">MODELS</a> 找到剛訓練的模型，點「設為 active」。
+                    預測一律使用 active 模型，同一時間只會有一個。</p>
+            </div>
+        </div>
+        <div class="step">
+            <div class="step-num">3</div>
+            <div class="step-body">
+                <h3>進行預測</h3>
+                <p>到 <a href="/ml/predict">PREDICT</a> 填寫單筆乘客資料按「預測」，
+                    或上傳含對應欄位的 CSV 進行批次預測，結果可下載為含機率的 CSV。</p>
+            </div>
+        </div>
+    </div>
+    <p class="muted" style="margin-top:16px;">
+        提示：尚未設定 active 模型時進行預測會被擋下，請先完成步驟 1、2。
+    </p>
+</div>
+{% endblock %}

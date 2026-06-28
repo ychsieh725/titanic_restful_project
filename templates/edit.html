@@ -90,7 +90,7 @@
     </form>
 
     <p style="text-align:center; margin-top:14px;">
-        <a href="/" class="muted">取消，回首頁</a>
+        <a href="/passengers" class="muted">取消，回乘客列表</a>
     </p>
 </div>
 {% endblock %}
@@ -108,7 +108,7 @@
         // 找不到乘客，就顯示錯誤訊息，然後回到首頁
         if (!response.ok) {
             alert("找不到指定乘客");
-            window.location.href = "/";
+            window.location.href = "/passengers";
             return;
         }
 
@@ -161,8 +161,8 @@
 
         alert("更新成功");
 
-        // 更新成功後，回到首頁
-        window.location.href = "/";
+        // 更新成功後，回到乘客列表
+        window.location.href = "/passengers";
     });
 
     loadPassenger();

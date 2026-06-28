@@ -358,7 +358,8 @@
     <div class="shell">
         <aside class="sidebar">
             <nav>
-                <a href="/"{% if active_page == 'home' %} class="active"{% endif %}>DATAS</a>
+                <a href="/"{% if active_page == 'home' %} class="active"{% endif %}>HOME</a>
+                <a href="/passengers"{% if active_page == 'datas' %} class="active"{% endif %}>DATAS</a>
                 <a href="/ml/train"{% if active_page == 'train' %} class="active"{% endif %}>TRAIN</a>
                 <a href="/ml/models"{% if active_page == 'models' %} class="active"{% endif %}>MODELS</a>
                 <a href="/ml/predict"{% if active_page == 'predict' %} class="active"{% endif %}>PREDICT</a>
