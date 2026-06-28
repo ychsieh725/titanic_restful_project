@@ -141,6 +141,22 @@
 
         th {
             background: var(--bg);
+            white-space: nowrap;
+        }
+
+        /* 連結樣式化為按鈕（可套在 <a> 上，與 <button> 視覺一致） */
+        .btn {
+            display: inline-block;
+            padding: 9px 18px;
+            border-radius: 6px;
+            background: var(--brand);
+            color: #fff;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            opacity: 0.92;
         }
 
         .muted {

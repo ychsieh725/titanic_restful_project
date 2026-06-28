@@ -2,13 +2,38 @@
 
 {% block title %}乘客資料管理 — Titanic ML{% endblock %}
 
+{% block head %}
+<style>
+    /* 首頁乘客表格欄位多（9 欄），放寬版面避免表頭擠成多行 */
+    main {
+        max-width: 1180px;
+    }
+
+    /* 搜尋列：輸入框可伸縮、按鈕固定寬 */
+    .search-row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        margin-top: 16px;
+        max-width: 520px;
+    }
+
+    .search-row input {
+        flex: 1;
+        margin-top: 0;
+        max-width: none;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <h1>乘客資料管理</h1>
 
 <div class="card">
-    <a href="/passengers/new">＋ 新增乘客</a>
-    <div style="display:flex; gap:8px; margin-top:12px;">
-        <input type="text" id="searchInput" placeholder="搜尋姓名" style="margin-top:0;">
+    <a class="btn" href="/passengers/new">＋ 新增乘客</a>
+
+    <div class="search-row">
+        <input type="text" id="searchInput" placeholder="🔍 搜尋姓名">
         <button type="button" onclick="loadPassengers(1)" style="margin-top:0;">查詢</button>
     </div>
     <p id="summary" class="muted"></p>
