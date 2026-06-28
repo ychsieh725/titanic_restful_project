@@ -73,23 +73,47 @@
             </div>
 
             <div class="field">
-                <label>SibSp <span class="zh">兄弟姊妹/配偶</span></label>
+                <label>SibSp <span class="zh">兄弟姊妹 / 配偶 (人)</span></label>
                 <input name="SibSp" type="number" min="0" value="0" required>
             </div>
 
             <div class="field">
-                <label>Parch <span class="zh">父母/子女</span></label>
+                <label>Parch <span class="zh">父母 / 子女 (人)</span></label>
                 <input name="Parch" type="number" min="0" value="0" required>
             </div>
 
             <div class="field">
                 <label>Ticket <span class="zh">票號</span></label>
-                <input name="Ticket" placeholder="例：A/5 21171" required>
+                <div style="display:flex; gap:8px;">
+                    <input name="Ticket" placeholder="例：A/5 21171" required style="flex:1;">
+                    <button type="button" id="randomTicketBtn" class="icon-btn" title="隨機產生票號">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="16 3 21 3 21 8" />
+                            <line x1="4" y1="20" x2="21" y2="3" />
+                            <polyline points="21 16 21 21 16 21" />
+                            <line x1="15" y1="15" x2="21" y2="21" />
+                            <line x1="4" y1="4" x2="9" y2="9" />
+                        </svg>
+                    </button>
+                </div>
             </div>
 
             <div class="field">
                 <label>Cabin <span class="zh">艙房</span></label>
-                <input name="Cabin" placeholder="例：C85">
+                <div style="display:flex; gap:8px;">
+                    <input name="Cabin" placeholder="例：C85" style="flex:1;">
+                    <button type="button" id="randomCabinBtn" class="icon-btn" title="隨機產生艙房">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="16 3 21 3 21 8" />
+                            <line x1="4" y1="20" x2="21" y2="3" />
+                            <polyline points="21 16 21 21 16 21" />
+                            <line x1="15" y1="15" x2="21" y2="21" />
+                            <line x1="4" y1="4" x2="9" y2="9" />
+                        </svg>
+                    </button>
+                </div>
             </div>
 
             <div class="field full">
@@ -139,6 +163,31 @@
 
     document.getElementById("randomNameBtn").addEventListener("click", function () {
         document.querySelector('input[name="Name"]').value = generateName();
+    });
+
+    // --- 隨機票號 / 艙房 ----------------------------------------------
+    // 票號：部分帶資料集常見前綴（A/5、PC…），其餘為純數字。
+    const TICKET_PREFIXES = ["", "", "", "A/5", "PC", "STON/O2.", "C.A.", "SC/Paris", "W./C."];
+
+    function generateTicket() {
+        const prefix = randomItem(TICKET_PREFIXES);
+        const number = 1000 + Math.floor(Math.random() * 999000);
+        return prefix ? `${prefix} ${number}` : `${number}`;
+    }
+
+    // 艙房：甲板字母（A–G）+ 房號。
+    const DECKS = ["A", "B", "C", "D", "E", "F", "G"];
+
+    function generateCabin() {
+        return `${randomItem(DECKS)}${1 + Math.floor(Math.random() * 130)}`;
+    }
+
+    document.getElementById("randomTicketBtn").addEventListener("click", function () {
+        document.querySelector('input[name="Ticket"]').value = generateTicket();
+    });
+
+    document.getElementById("randomCabinBtn").addEventListener("click", function () {
+        document.querySelector('input[name="Cabin"]').value = generateCabin();
     });
 
     // 監聽 passengerForm 的 submit 事件，當表單被提交時，會觸發這個事件處理器。
