@@ -63,6 +63,18 @@
         margin-top: 0;
         text-align: center;
     }
+
+    /* 是否生還狀態圖示（綠勾 / 紅 X） */
+    .status-icon {
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .status-icon svg {
+        width: 20px;
+        height: 20px;
+        display: block;
+    }
 </style>
 {% endblock %}
 
@@ -175,9 +187,9 @@
         for (const item of items) {
             const tr = document.createElement("tr");
 
-            const survivedBadge = item.Survived === 1
-                ? '<span class="badge badge-success">生還</span>'
-                : '<span class="badge badge-danger">未生還</span>';
+            const survivedIcon = item.Survived === 1
+                ? `<span class="status-icon ok" title="生還">${ICON_CHECK}</span>`
+                : `<span class="status-icon bad" title="未生還">${ICON_X}</span>`;
 
             tr.innerHTML = `
                 <td>${item.PassengerId}</td>
@@ -185,7 +197,7 @@
                 <td>${item.Sex}</td>
                 <td>${item.Age ?? "—"}</td>
                 <td>${item.Pclass}</td>
-                <td>${survivedBadge}</td>
+                <td>${survivedIcon}</td>
                 <td>${item.Fare}</td>
                 <td>${item.Embarked ?? "—"}</td>
                 <td>
@@ -205,6 +217,20 @@
             tbody.appendChild(tr);
         }
     }
+
+    // 是否生還狀態圖示（feather 風格）：生還=勾、未生還=叉。
+    const ICON_CHECK = `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+            stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12" />
+        </svg>`;
+
+    const ICON_X = `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+            stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+        </svg>`;
 
     // 行內操作圖示（feather 風格）：編輯=鉛筆、刪除=垃圾桶。
     const ICON_EDIT = `
