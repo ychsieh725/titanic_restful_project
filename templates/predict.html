@@ -6,7 +6,7 @@
 <h1>生存預測</h1>
 
 <!-- 單筆預測 -->
-<div class="card">
+<div class="card narrow">
     <h2 style="font-size:1.1rem;">單筆預測</h2>
     <form id="singleForm">
         <div class="form-grid">
@@ -83,7 +83,7 @@
 </div>
 
 <!-- CSV 批次預測 -->
-<div class="card">
+<div class="card narrow">
     <h2 style="font-size:1.1rem;">CSV 批次預測</h2>
     <p class="muted">上傳含 Pclass, Sex, Name, Ticket, SibSp, Parch, Age, Fare, Cabin, Embarked 欄位的 CSV。</p>
     <form id="batchForm">
@@ -97,10 +97,13 @@
     <p id="batchError" class="bad" hidden></p>
     <p id="batchSummary" class="muted" hidden></p>
 
-    <table id="batchTable" hidden>
-        <thead id="batchHead"></thead>
-        <tbody id="batchBody"></tbody>
-    </table>
+    <!-- 結果欄位多，於卡片內水平捲動，避免撐破窄版版面 -->
+    <div style="overflow-x:auto;">
+        <table id="batchTable" hidden>
+            <thead id="batchHead"></thead>
+            <tbody id="batchBody"></tbody>
+        </table>
+    </div>
 </div>
 {% endblock %}
 
