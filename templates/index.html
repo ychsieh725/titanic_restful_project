@@ -43,25 +43,55 @@
         display: block;
     }
 
-    /* 分頁列：置中、按鈕較小 */
-    .pagination {
+    /* 分頁器：圓形上一頁/下一頁 + 中間頁碼膠囊 */
+    .pager {
         display: flex;
-        gap: 8px;
         align-items: center;
         justify-content: center;
-        margin-top: 18px;
-        flex-wrap: wrap;
+        gap: 14px;
+        margin-top: 20px;
     }
 
-    .pagination button {
+    .pager-btn {
         margin-top: 0;
-        padding: 7px 16px;
+        width: 40px;
+        height: 40px;
+        padding: 0;
+        border-radius: 50%;
+        background: #fff;
+        border: 1px solid var(--line);
+        color: var(--fg);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
     }
 
-    .pagination input {
-        width: 64px;
+    .pager-btn:hover:not(:disabled) {
+        background: var(--panel);
+    }
+
+    .pager-btn svg {
+        width: 18px;
+        height: 18px;
+        display: block;
+    }
+
+    .pager-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: var(--panel);
+        border-radius: 30px;
+        padding: 6px 16px;
+        font-size: 0.9rem;
+    }
+
+    .pager-pill input {
+        width: 48px;
         margin-top: 0;
+        padding: 4px 6px;
         text-align: center;
+        border-radius: 20px;
     }
 
     /* 是否生還狀態圖示（綠勾 / 紅 X） */
@@ -115,16 +145,28 @@
         <tbody id="passengerTableBody"></tbody>
     </table>
 
-    <div class="pagination">
-        <button type="button" id="firstBtn" onclick="goToPage(1)">第一頁</button>
-        <button type="button" id="prevBtn" onclick="goToPage(currentPage - 1)">上一頁</button>
-        <span class="muted">第</span>
-        <input type="number" id="pageInput" min="1"
-            onkeydown="if (event.key === 'Enter') jumpToInput()">
-        <span class="muted">頁 / 共 <span id="totalPages">0</span> 頁</span>
-        <button type="button" onclick="jumpToInput()">跳轉</button>
-        <button type="button" id="nextBtn" onclick="goToPage(currentPage + 1)">下一頁</button>
-        <button type="button" id="lastBtn" onclick="goToPage(getTotalPages())">最後一頁</button>
+    <div class="pager">
+        <button type="button" id="prevBtn" class="pager-btn" title="上一頁"
+            onclick="goToPage(currentPage - 1)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="15 18 9 12 15 6" />
+            </svg>
+        </button>
+
+        <span class="pager-pill">
+            <input type="number" id="pageInput" min="1" title="輸入頁碼後按 Enter 跳轉"
+                onkeydown="if (event.key === 'Enter') jumpToInput()">
+            <span class="muted">/ <span id="totalPages">0</span></span>
+        </span>
+
+        <button type="button" id="nextBtn" class="pager-btn" title="下一頁"
+            onclick="goToPage(currentPage + 1)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="9 18 15 12 9 6" />
+            </svg>
+        </button>
     </div>
 </div>
 {% endblock %}
@@ -267,7 +309,7 @@
         goToPage(value);
     }
 
-    // 顯示分頁資訊：更新總頁數、輸入框預設值，並依邊界停用首尾/上下頁按鈕。
+    // 顯示分頁資訊：更新總頁數、頁碼膠囊輸入值，並依邊界停用上/下頁按鈕。
     function renderPagination(page, perPage, total) {
         const totalPages = getTotalPages();
 
@@ -275,10 +317,8 @@
         document.getElementById("totalPages").textContent = totalPages;
         document.getElementById("pageInput").value = page;
 
-        document.getElementById("firstBtn").disabled = page <= 1;
         document.getElementById("prevBtn").disabled = page <= 1;
         document.getElementById("nextBtn").disabled = page >= totalPages;
-        document.getElementById("lastBtn").disabled = page >= totalPages;
     }
 
     // 刪除的乘客 (透過 passengerId)。
