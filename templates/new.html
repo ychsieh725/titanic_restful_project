@@ -64,7 +64,8 @@
 
             <div class="field">
                 <label>Age <span class="zh">年齡</span></label>
-                <input name="Age" type="number" step="0.01" placeholder="例：22">
+                <input name="Age" type="number" step="1" min="0" max="120" placeholder="例：22"
+                    onkeydown="if (['.', 'e', 'E', '+', '-'].includes(event.key)) event.preventDefault();">
             </div>
 
             <div class="field">
