@@ -70,7 +70,7 @@
             tr.appendChild(cell(model.algorithm));
             tr.appendChild(cell(formatNum(model.best_cv_score)));
             tr.appendChild(cell(formatNum((model.metrics || {}).accuracy)));
-            tr.appendChild(cell(model.created_at));
+            tr.appendChild(cell(formatDateTaiwan(model.created_at)));
             tr.appendChild(statusCell(model.is_active));
             tr.appendChild(actionCell(model));
             tbody.appendChild(tr);
@@ -81,6 +81,21 @@
         const td = document.createElement("td");
         td.textContent = text === undefined || text === null ? "—" : text;
         return td;
+    }
+
+    // 建立時間以 UTC 儲存（SQLite datetime('now')）；補 Z 當 UTC 解析後轉台灣時間顯示。
+    function formatDateTaiwan(value) {
+        if (!value) return "—";
+        const hasTz = /[zZ]|[+-]\d{2}:?\d{2}$/.test(value);
+        const utc = hasTz ? value : value.replace(" ", "T") + "Z";
+        const date = new Date(utc);
+        if (Number.isNaN(date.getTime())) return value;
+        return date.toLocaleString("zh-TW", {
+            timeZone: "Asia/Taipei",
+            year: "numeric", month: "2-digit", day: "2-digit",
+            hour: "2-digit", minute: "2-digit", second: "2-digit",
+            hour12: false,
+        });
     }
 
     function statusCell(isActive) {
