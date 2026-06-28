@@ -1,9 +1,9 @@
 # 開發進度紀錄 — Titanic ML 平台
 
 > **分支:** `feat/ml-platform`
-> **最後更新:** 2026-06-28 11:40
-> **狀態:** ✅ M1 達成；✅ M2 達成（5.2 + 6.1 + 6.2 + 6.3 全完成）
-> **測試總計:** 100 passed / 覆蓋率 99%
+> **最後更新:** 2026-06-28 12:20
+> **狀態:** ✅ M1 + M2 + M3 全達成；MVP 六大必做項逐項綠燈，待開 PR 合回 main
+> **測試總計:** 116 passed / 覆蓋率 99%
 > **開發流程:** `/task-next → /plan → /tdd → /verify`，每任務 TDD（RED→GREEN）+ 獨立 commit
 
 ---
@@ -14,7 +14,7 @@
 |---|---|---|
 | M1 核心管線可訓練 | 一鍵訓練 + 超參數 + 模型儲存 | ✅ 完成 |
 | M2 預測可用 | 單筆 + CSV 批次預測 | ✅ 完成（5.2 + 6.1 + 6.2 + 6.3） |
-| M3 MVP 驗收 | UI 串接 + 6 大必做驗收 | ⏳ 未開始 |
+| M3 MVP 驗收 | UI 串接 + 6 大必做驗收 | ✅ 完成（7.x UI + 8.x 整合/驗收） |
 
 ## 2. 任務完成總覽
 
@@ -31,8 +31,9 @@
 | 5.2 | 模型清單 + active 切換 API | ✅ | `a4aecd0` |
 | 6.1 | 單筆預測服務 + API | ✅ | `3890a15` |
 | 6.3 | 輸入驗證（schema-based） | ✅ | `2a72f3d` |
-| 6.2 | CSV 批次預測 + 結果 CSV 下載 | ✅ | (本次) |
-| 7.x / 8.x | UI / 整合測試 / 驗收 | ⏳ | — |
+| 6.2 | CSV 批次預測 + 結果 CSV 下載 | ✅ | `d3ad13f` |
+| 7.1–7.4 | UI 頁面（訓練/模型/預測 + 導覽列） | ✅ | `505c92d` |
+| 8.1 / 8.2 | 端到端整合測試 + 六大必做驗收 | ✅ | (本次) |
 
 ---
 
@@ -226,9 +227,24 @@
 
 ---
 
-## 7. 下一步
+## 7. SRS §8 六大必做項驗收（test_acceptance.py 端到端）
 
-| 順序 | 任務 | 依賴 | 說明 |
+| # | 驗收項 | 狀態 | 對應測試 |
 |---|---|---|---|
-| 1 | 7.x UI | 各 API | 訓練/模型/預測頁（M3） |
-| 2 | 8.x 整合測試 + 驗收 | 7.x | 6 大必做驗收 |
+| AC1 | 一鍵訓練且能得知完成（running→done） | ✅ | `test_train_to_registry_flow` |
+| AC2 | 超參數調校且顯示最佳超參數與指標 | ✅ | 同上（斷言 best_params + metrics） |
+| AC3 | 模型被儲存且可於模型頁列出 | ✅ | 同上（joblib 檔存在 + /models 列出） |
+| AC4 | 單筆預測輸出存活判定與生存機率 | ✅ | `test_single_prediction_outputs_survival_and_probability` |
+| AC5 | CSV 批次預測並可下載含機率結果 | ✅ | `test_batch_prediction_json_and_csv_download` |
+| AC6 | 預測與訓練前處理一致（同一序列化管線） | ✅ | `test_shared_pipeline_single_equals_batch` |
+
+> 全程以完整 app（API + 頁面兩 blueprint）對臨時 DB 跑端到端流程；MVP 必做需求全數通過。
+
+---
+
+## 8. 下一步
+
+| 順序 | 任務 | 說明 |
+|---|---|---|
+| 1 | 開 PR 合回 main | MVP 完成；`gh pr create`（WHY/WHAT/IMPACT） |
+| 2 | （Optional 加分）FR-6 EDA 視覺化 | 性別×艙等存活率熱力圖、特徵重要度 |
