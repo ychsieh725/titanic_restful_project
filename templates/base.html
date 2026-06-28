@@ -107,6 +107,12 @@
             cursor: not-allowed;
         }
 
+        /* 表格內的操作按鈕：去除版面用的上邊距、縮小內距 */
+        td button {
+            margin-top: 0;
+            padding: 4px 10px;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
@@ -151,7 +157,7 @@
 <body>
     <nav>
         <span class="brand">🚢 Titanic ML</span>
-        <a href="/">首頁</a>
+        <a href="/"{% if active_page == 'home' %} class="active"{% endif %}>首頁</a>
         <a href="/ml/train"{% if active_page == 'train' %} class="active"{% endif %}>訓練</a>
         <a href="/ml/models"{% if active_page == 'models' %} class="active"{% endif %}>模型</a>
         <a href="/ml/predict"{% if active_page == 'predict' %} class="active"{% endif %}>預測</a>

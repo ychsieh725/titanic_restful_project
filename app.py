@@ -43,7 +43,7 @@ def row_to_dict(row):
 # 首頁
 @app.route("/")
 def index_page():
-    return render_template("index.html")
+    return render_template("index.html", active_page="home")
 
 # 新增乘客頁面
 @app.route("/passengers/new")
