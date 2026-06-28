@@ -7,10 +7,10 @@
     <title>{% block title %}Titanic ML 平台{% endblock %}</title>
     <style>
         :root {
-            --bg: #f6f7f9;
             --fg: #1f2933;
             --muted: #6b7280;
-            --line: #d8dee4;
+            --line: #e5e7eb;
+            --panel: #f4f5f7;
             --brand: #2563eb;
             --ok: #15803d;
             --bad: #b91c1c;
@@ -24,48 +24,71 @@
             font-family: Arial, "Helvetica Neue", sans-serif;
             margin: 0;
             color: var(--fg);
-            background: var(--bg);
+            background: #fff;
         }
 
-        nav {
+        /* --- App shell：頂部列 + 左側邊欄 + 主內容 --- */
+        .topbar {
             display: flex;
-            gap: 4px;
             align-items: center;
-            padding: 12px 24px;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 16px 28px;
             background: #fff;
             border-bottom: 1px solid var(--line);
         }
 
-        nav .brand {
-            font-weight: 700;
-            /* 把品牌留在左側，其餘連結推到右側 */
-            margin-right: auto;
+        .topbar .brand {
+            font-weight: 800;
+            font-size: 1.25rem;
+            letter-spacing: 0.5px;
         }
 
-        nav a {
-            padding: 6px 12px;
-            border-radius: 6px;
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .shell {
+            display: flex;
+            align-items: flex-start;
+        }
+
+        .sidebar {
+            width: 180px;
+            flex-shrink: 0;
+            padding: 20px 12px;
+        }
+
+        .sidebar nav {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .sidebar nav a {
+            padding: 10px 18px;
+            border-radius: 30px;
             text-decoration: none;
             color: var(--fg);
-            /* 預留與 active 底線等高的透明邊框，避免切換時版面跳動 */
-            border-bottom: 2px solid transparent;
+            font-weight: 500;
         }
 
-        nav a:hover {
-            background: var(--bg);
+        .sidebar nav a:hover {
+            background: var(--panel);
         }
 
-        nav a.active {
-            color: var(--brand);
-            font-weight: 600;
-            border-bottom-color: var(--brand);
-            border-radius: 0;
+        .sidebar nav a.active {
+            background: var(--panel);
+            font-weight: 700;
         }
 
         main {
-            max-width: 880px;
-            margin: 24px auto;
-            padding: 0 24px;
+            flex: 1;
+            min-width: 0;
+            max-width: 1200px;
+            padding: 24px 28px 48px;
         }
 
         h1 {
@@ -73,10 +96,9 @@
         }
 
         .card {
-            background: #fff;
-            border: 1px solid var(--line);
-            border-radius: 10px;
-            padding: 20px;
+            background: var(--panel);
+            border-radius: 16px;
+            padding: 22px;
             margin-bottom: 20px;
         }
 
@@ -89,11 +111,12 @@
 
         input,
         select {
-            padding: 8px;
+            padding: 8px 12px;
             width: 100%;
             max-width: 320px;
+            background: #fff;
             border: 1px solid var(--line);
-            border-radius: 6px;
+            border-radius: 8px;
             margin-top: 4px;
         }
 
@@ -128,6 +151,59 @@
         .actions {
             display: flex;
             gap: 6px;
+            align-items: center;
+        }
+
+        /* 圖示按鈕：透明底、hover 才上色（編輯/刪除等行內操作） */
+        .icon-btn {
+            margin-top: 0;
+            padding: 7px;
+            background: transparent;
+            color: var(--muted);
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .icon-btn:hover {
+            background: var(--panel);
+            color: var(--fg);
+        }
+
+        .icon-btn.danger {
+            background: transparent;
+            color: var(--muted);
+        }
+
+        .icon-btn.danger:hover {
+            background: #fee2e2;
+            color: var(--bad);
+        }
+
+        .icon-btn svg {
+            width: 18px;
+            height: 18px;
+            display: block;
+        }
+
+        /* 狀態膠囊標籤 */
+        .badge {
+            display: inline-block;
+            padding: 3px 12px;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .badge-success {
+            background: #dcfce7;
+            color: var(--ok);
+        }
+
+        .badge-danger {
+            background: #fee2e2;
+            color: var(--bad);
         }
 
         table {
@@ -139,14 +215,20 @@
 
         th,
         td {
-            border: 1px solid var(--line);
-            padding: 6px 8px;
+            padding: 12px 14px;
             text-align: left;
+            border-bottom: 1px solid var(--line);
         }
 
         th {
-            background: var(--bg);
             white-space: nowrap;
+            color: var(--muted);
+            font-weight: 600;
+            font-size: 0.82rem;
+        }
+
+        tbody tr:hover {
+            background: rgba(0, 0, 0, 0.02);
         }
 
         /* 連結樣式化為按鈕（可套在 <a> 上，與 <button> 視覺一致） */
@@ -177,28 +259,48 @@
         }
 
         pre {
-            background: var(--bg);
+            background: #fff;
             border: 1px solid var(--line);
-            border-radius: 6px;
+            border-radius: 8px;
             padding: 12px;
             overflow: auto;
+        }
+
+        @media (max-width: 640px) {
+            .sidebar {
+                width: 96px;
+                padding: 16px 8px;
+            }
+
+            .sidebar nav a {
+                padding: 10px 12px;
+                text-align: center;
+            }
         }
     </style>
     {% block head %}{% endblock %}
 </head>
 
 <body>
-    <nav>
-        <span class="brand">Titanic ML</span>
-        <a href="/"{% if active_page == 'home' %} class="active"{% endif %}>首頁</a>
-        <a href="/ml/train"{% if active_page == 'train' %} class="active"{% endif %}>訓練</a>
-        <a href="/ml/models"{% if active_page == 'models' %} class="active"{% endif %}>模型</a>
-        <a href="/ml/predict"{% if active_page == 'predict' %} class="active"{% endif %}>預測</a>
-    </nav>
+    <header class="topbar">
+        <span class="brand">TITANIC ML</span>
+        <div class="topbar-right">{% block topbar_right %}{% endblock %}</div>
+    </header>
 
-    <main>
-        {% block content %}{% endblock %}
-    </main>
+    <div class="shell">
+        <aside class="sidebar">
+            <nav>
+                <a href="/"{% if active_page == 'home' %} class="active"{% endif %}>首頁</a>
+                <a href="/ml/train"{% if active_page == 'train' %} class="active"{% endif %}>訓練</a>
+                <a href="/ml/models"{% if active_page == 'models' %} class="active"{% endif %}>模型</a>
+                <a href="/ml/predict"{% if active_page == 'predict' %} class="active"{% endif %}>預測</a>
+            </nav>
+        </aside>
+
+        <main>
+            {% block content %}{% endblock %}
+        </main>
+    </div>
 
     {% block scripts %}{% endblock %}
 </body>
