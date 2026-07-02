@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}首頁 — Titanic ML 平台{% endblock %}
+{% block title %}Titanic ML{% endblock %}
 
 {% block head %}
 <style>
@@ -8,8 +8,9 @@
     .hero {
         position: relative;
         width: 100vw;
+        /* 上移到最頂端（蓋掉 main 的 padding-top），讓透明導覽列疊在圖上 */
         margin: -24px calc(50% - 50vw) 32px;
-        min-height: calc(100vh - 58px);
+        min-height: 100vh;
         display: flex;
         align-items: flex-end;
         padding: 48px clamp(24px, 6vw, 80px) 60px;
@@ -357,6 +358,43 @@
         flex-shrink: 0;
         margin-top: 1px;
     }
+
+    /* --- 首頁專屬：導覽列透明並疊在 hero 圖上 --- */
+    /* topbar 改絕對定位脫離流排 → 頂端白區塊消失、圖片延伸到 nav 底下 */
+    .topbar {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 30;
+        background: transparent;
+        border-bottom: none;
+    }
+
+    .topbar .brand {
+        color: #fff;
+    }
+
+    .nav-toggle {
+        color: #fff;
+    }
+
+    /* 桌機：橫向導覽壓在深色圖上 → 白字（手機為白底下拉選單，維持深字不覆寫） */
+    @media (min-width: 641px) {
+        .topnav a {
+            color: #fff;
+        }
+
+        .topnav a:hover {
+            color: #fff;
+            opacity: 0.82;
+        }
+
+        .topnav a.active {
+            color: #fff;
+            border-bottom-color: #fff;
+        }
+    }
 </style>
 {% endblock %}
 
@@ -475,7 +513,6 @@
 <section class="section-head">
     <span class="eyebrow">HOW IT WORKS</span>
     <h2>使用教學</h2>
-    <!-- <p>三個步驟即可完成一次完整的預測流程。</p> -->
 </section>
 <div class="steps">
     <div class="step">
