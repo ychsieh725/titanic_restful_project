@@ -413,6 +413,88 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        /* --- 全站頁尾 --- */
+        .site-footer {
+            margin-top: 48px;
+            border-top: 1px solid var(--line);
+            background: var(--panel);
+        }
+
+        .footer-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 28px 28px;
+            display: grid;
+            grid-template-columns: 1.6fr 1fr 1fr;
+            gap: 32px;
+        }
+
+        .footer-brand .name {
+            font-weight: 800;
+            font-size: 1.15rem;
+            letter-spacing: 0.5px;
+        }
+
+        .footer-brand p {
+            margin: 12px 0 0;
+            max-width: 320px;
+            color: var(--muted);
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        .footer-col h4 {
+            margin: 0 0 12px;
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--muted);
+        }
+
+        .footer-col a {
+            display: block;
+            padding: 5px 0;
+            color: var(--fg);
+            text-decoration: none;
+            font-size: 0.92rem;
+        }
+
+        .footer-col a:hover {
+            color: var(--brand);
+        }
+
+        /* 佔位項（內容未定）：非連結、灰字 */
+        .footer-col .soon {
+            display: block;
+            padding: 5px 0;
+            color: var(--muted);
+            font-size: 0.92rem;
+        }
+
+        .footer-bottom {
+            border-top: 1px solid var(--line);
+        }
+
+        .footer-bottom-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 16px 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            color: var(--muted);
+            font-size: 0.85rem;
+        }
+
+        @media (max-width: 640px) {
+            .footer-inner {
+                grid-template-columns: 1fr;
+                gap: 24px;
+            }
+        }
     </style>
     {% block head %}{% endblock %}
 </head>
@@ -442,6 +524,33 @@
     <main>
         {% block content %}{% endblock %}
     </main>
+
+    <footer class="site-footer">
+        <div class="footer-inner">
+            <div class="footer-brand">
+                <span class="name">TITANIC ML</span>
+                <p>鐵達尼號生存預測機器學習平台 — 從資料管理、模型訓練到單筆／批次預測的端到端流程。</p>
+            </div>
+            <div class="footer-col">
+                <h4>功能</h4>
+                <a href="/passengers">資料管理</a>
+                <a href="/ml/train">模型訓練</a>
+                <a href="/ml/models">模型管理</a>
+                <a href="/ml/predict">生存預測</a>
+            </div>
+            <div class="footer-col">
+                <h4>資源</h4>
+                {# 內容未定，先以佔位項預留；之後可換成 GitHub / 文件 / 聯絡等連結 #}
+                <span class="soon">更多內容規劃中…</span>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <div class="footer-bottom-inner">
+                <span>© 2026 Titanic ML Platform</span>
+                <span>作者：YCHsieh</span>
+            </div>
+        </div>
+    </footer>
 
     <!-- 漢堡選單開合（RWD）：切換 .open 並同步 aria-expanded -->
     <script>
