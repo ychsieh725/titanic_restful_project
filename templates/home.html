@@ -14,16 +14,47 @@
         align-items: flex-end;
         padding: 48px clamp(24px, 6vw, 80px) 60px;
         overflow: hidden;
-        /* 左／下加深的 scrim，襯托左側白色大字 */
-        background-image:
-            linear-gradient(90deg, rgba(8, 10, 20, 0.68) 0%, rgba(8, 10, 20, 0.28) 44%, rgba(8, 10, 20, 0) 72%),
-            linear-gradient(0deg, rgba(8, 10, 20, 0.6) 0%, rgba(8, 10, 20, 0) 44%),
-            url('{{ url_for('static', filename='hero_page.webp') }}');
+    }
+
+    /* 背景圖獨立成一層，做 GPU 加速的緩慢放大（Ken Burns） */
+    .hero::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        background-image: url('{{ url_for('static', filename='hero_page.webp') }}');
         background-size: cover;
         background-position: center;
+        transform: scale(1);
+        transform-origin: center;
+        animation: hero-zoom 20s ease-out both;
+    }
+
+    /* 左／下加深的 scrim 疊在圖片上，襯托左側白色大字 */
+    .hero::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        pointer-events: none;
+        background-image:
+            linear-gradient(90deg, rgba(8, 10, 20, 0.68) 0%, rgba(8, 10, 20, 0.28) 44%, rgba(8, 10, 20, 0) 72%),
+            linear-gradient(0deg, rgba(8, 10, 20, 0.6) 0%, rgba(8, 10, 20, 0) 44%);
+    }
+
+    @keyframes hero-zoom {
+        from {
+            transform: scale(1);
+        }
+
+        to {
+            transform: scale(1.08);
+        }
     }
 
     .hero-inner {
+        position: relative;
+        z-index: 2;
         max-width: 60vw;
     }
 
@@ -102,6 +133,7 @@
     /* 尊重使用者的減少動態偏好 */
     @media (prefers-reduced-motion: reduce) {
 
+        .hero::before,
         .hero-zh,
         .hero-en,
         .hero-cta {
@@ -110,6 +142,12 @@
     }
 
     @media (max-width: 640px) {
+        .hero {
+            min-height: 62vh;
+            /* 左側多 30px，讓圖上元素整體右移 */
+            padding: 32px 20px 40px 50px;
+        }
+
         .hero-inner {
             max-width: 100%;
         }
