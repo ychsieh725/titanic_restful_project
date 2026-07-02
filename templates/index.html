@@ -105,6 +105,29 @@
         height: 20px;
         display: block;
     }
+
+    /* 手機版頂欄重排：品牌最左、搜尋框置中彈性填滿、漢堡靠右 */
+    @media (max-width: 640px) {
+        .topbar .brand {
+            order: -1;
+        }
+
+        .topbar-right {
+            order: 1;
+            flex: 1;
+            justify-content: center;
+        }
+
+        .nav-toggle {
+            order: 2;
+            margin-left: 0;
+        }
+
+        .search-box {
+            width: 100%;
+            max-width: 260px;
+        }
+    }
 </style>
 {% endblock %}
 
@@ -128,22 +151,24 @@
 <p id="summary" class="muted"></p>
 
 <div class="card">
-    <table>
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>姓名</th>
-                <th>性別</th>
-                <th>年齡</th>
-                <th>艙等</th>
-                <th>是否生還</th>
-                <th>票價</th>
-                <th>登船港口</th>
-                <th style="text-align:right;">操作</th>
-            </tr>
-        </thead>
-        <tbody id="passengerTableBody"></tbody>
-    </table>
+    <div class="table-scroll">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>姓名</th>
+                    <th>性別</th>
+                    <th>年齡</th>
+                    <th>艙等</th>
+                    <th>是否生還</th>
+                    <th>票價</th>
+                    <th>登船港口</th>
+                    <th style="text-align:right;">操作</th>
+                </tr>
+            </thead>
+            <tbody id="passengerTableBody"></tbody>
+        </table>
+    </div>
 
     <div class="pager">
         <button type="button" id="prevBtn" class="pager-btn" title="上一頁"

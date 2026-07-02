@@ -82,6 +82,24 @@
             gap: 8px;
         }
 
+        /* 漢堡選單按鈕：桌機隱藏，手機顯示（覆寫全域 button 樣式） */
+        .nav-toggle {
+            display: none;
+            margin-top: 0;
+            padding: 8px;
+            background: transparent;
+            color: var(--fg);
+            border: none;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .nav-toggle svg {
+            width: 26px;
+            height: 26px;
+        }
+
         main {
             max-width: 1200px;
             margin: 0 auto;
@@ -292,6 +310,17 @@
             background: rgba(0, 0, 0, 0.02);
         }
 
+        /* 欄位多的表格於窄視窗改橫向捲動，避免溢出被裁切（body 為 overflow-x:hidden）*/
+        .table-scroll {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* 保底寬度：手機上不壓縮欄位，改以橫向拖拉檢視 */
+        .table-scroll table {
+            min-width: 680px;
+        }
+
         /* 連結樣式化為按鈕（可套在 <a> 上，與 <button> 視覺一致） */
         .btn {
             display: inline-block;
@@ -329,13 +358,55 @@
 
         @media (max-width: 640px) {
             .topbar {
-                height: auto;
-                flex-wrap: wrap;
-                padding: 10px 16px;
+                padding: 0 16px;
+                position: relative;
             }
 
+            .topbar .brand {
+                flex: 0 0 auto;
+            }
+
+            /* 漢堡按鈕靠右；隱藏桌機用的 topbar-right 佔位撐開 */
+            .nav-toggle {
+                display: inline-flex;
+                margin-left: auto;
+            }
+
+            .topbar-right {
+                flex: 0 0 auto;
+            }
+
+            /* 導覽收合成下拉面板：預設隱藏，.open 時展開 */
+            .topnav {
+                display: none;
+                position: absolute;
+                top: 58px;
+                left: 0;
+                right: 0;
+                flex-direction: column;
+                align-items: stretch;
+                gap: 0;
+                background: #fff;
+                border-bottom: 1px solid var(--line);
+                padding: 6px 0;
+                box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+                z-index: 20;
+            }
+
+            .topnav.open {
+                display: flex;
+            }
+
+            /* 直式清單：底線改回無，當前頁以底色 + 主色標示 */
             .topnav a {
-                padding: 6px 12px;
+                padding: 12px 20px;
+                border-bottom: none;
+            }
+
+            .topnav a.active {
+                border-bottom: none;
+                color: var(--brand);
+                background: var(--panel);
             }
 
             .form-grid {
@@ -349,7 +420,16 @@
 <body>
     <header class="topbar">
         <span class="brand">TITANIC ML</span>
-        <nav class="topnav">
+        <button class="nav-toggle" type="button" aria-label="開啟導覽選單" aria-expanded="false"
+            aria-controls="topnav">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <line x1="3" y1="6" x2="21" y2="6" />
+                <line x1="3" y1="12" x2="21" y2="12" />
+                <line x1="3" y1="18" x2="21" y2="18" />
+            </svg>
+        </button>
+        <nav class="topnav" id="topnav">
             <a href="/"{% if active_page == 'home' %} class="active"{% endif %}>HOME</a>
             <a href="/passengers"{% if active_page == 'datas' %} class="active"{% endif %}>DATAS</a>
             <a href="/ml/train"{% if active_page == 'train' %} class="active"{% endif %}>TRAIN</a>
@@ -362,6 +442,19 @@
     <main>
         {% block content %}{% endblock %}
     </main>
+
+    <!-- 漢堡選單開合（RWD）：切換 .open 並同步 aria-expanded -->
+    <script>
+        (function () {
+            var toggle = document.querySelector(".nav-toggle");
+            var nav = document.getElementById("topnav");
+            if (!toggle || !nav) return;
+            toggle.addEventListener("click", function () {
+                var isOpen = nav.classList.toggle("open");
+                toggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
+            });
+        })();
+    </script>
 
     {% block scripts %}{% endblock %}
 </body>

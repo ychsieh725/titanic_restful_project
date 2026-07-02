@@ -11,20 +11,22 @@
     <p id="emptyHint" class="muted" hidden>尚無模型，請先到「訓練」頁訓練一個。</p>
     <p id="errorBox" class="bad" hidden></p>
 
-    <table id="modelsTable" hidden>
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>演算法</th>
-                <th>CV 分數</th>
-                <th>Accuracy</th>
-                <th>建立時間</th>
-                <th>狀態</th>
-                <th style="text-align:right;">操作</th>
-            </tr>
-        </thead>
-        <tbody id="modelsBody"></tbody>
-    </table>
+    <div class="table-scroll">
+        <table id="modelsTable" hidden>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>演算法</th>
+                    <th>CV 分數</th>
+                    <th>Accuracy</th>
+                    <th>建立時間</th>
+                    <th>狀態</th>
+                    <th style="text-align:right;">操作</th>
+                </tr>
+            </thead>
+            <tbody id="modelsBody"></tbody>
+        </table>
+    </div>
 </div>
 {% endblock %}
 
