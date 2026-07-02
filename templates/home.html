@@ -153,91 +153,209 @@
         }
     }
 
-    .section-title {
-        font-size: 1.25rem;
-        margin: 32px 0 14px;
+    /* 區塊標題：eyebrow 小標 + 主標 + 副標 */
+    .section-head {
+        max-width: 640px;
+        margin: 40px 0 22px;
     }
 
+    .section-head .eyebrow {
+        display: inline-block;
+        margin: 0 0 10px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--brand);
+    }
+
+    .section-head h2 {
+        margin: 0 0 8px;
+        font-size: clamp(1.5rem, 3vw, 2rem);
+        letter-spacing: -0.01em;
+    }
+
+    .section-head p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.6;
+    }
+
+    /* 功能卡片格 */
     .feature-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 16px;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 18px;
     }
 
     .feature {
+        display: flex;
+        flex-direction: column;
         text-decoration: none;
         color: inherit;
-        display: block;
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 24px;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+
+    .feature:hover {
+        transform: translateY(-4px);
+        border-color: var(--brand);
+        box-shadow: 0 14px 30px rgba(37, 99, 235, 0.12);
     }
 
     .feature .feature-icon {
-        width: 42px;
-        height: 42px;
-        border-radius: 12px;
+        width: 46px;
+        height: 46px;
+        border-radius: 13px;
         background: #eef2ff;
         color: var(--brand);
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        margin-bottom: 10px;
+        margin-bottom: 16px;
+        transition: background 0.2s ease, color 0.2s ease;
+    }
+
+    .feature:hover .feature-icon {
+        background: var(--brand);
+        color: #fff;
     }
 
     .feature .feature-icon svg {
-        width: 22px;
-        height: 22px;
+        width: 24px;
+        height: 24px;
     }
 
     .feature h3 {
         margin: 0 0 6px;
-        font-size: 1.02rem;
+        font-size: 1.05rem;
     }
 
     .feature p {
-        margin: 0;
+        margin: 0 0 16px;
         color: var(--muted);
         font-size: 0.9rem;
-        line-height: 1.5;
+        line-height: 1.55;
     }
 
+    .feature .feature-more {
+        margin-top: auto;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--brand);
+    }
+
+    .feature .feature-more svg {
+        width: 15px;
+        height: 15px;
+        transition: transform 0.2s ease;
+    }
+
+    .feature:hover .feature-more svg {
+        transform: translateX(3px);
+    }
+
+    /* 使用教學：垂直時間軸（圓形打勾徽章 + 連接線） */
     .steps {
         display: flex;
         flex-direction: column;
-        gap: 14px;
+        max-width: 620px;
     }
 
     .step {
+        position: relative;
         display: flex;
-        gap: 14px;
-        align-items: flex-start;
+        gap: 18px;
+        padding-bottom: 34px;
+    }
+
+    .step:last-child {
+        padding-bottom: 0;
+    }
+
+    /* 串接各步驟的垂直連接線 */
+    .step::before {
+        content: "";
+        position: absolute;
+        left: 19px;
+        top: 44px;
+        bottom: 6px;
+        width: 2px;
+        background: var(--line);
+    }
+
+    .step:last-child::before {
+        display: none;
     }
 
     .step-num {
-        width: 32px;
-        height: 32px;
+        width: 40px;
+        height: 40px;
         border-radius: 50%;
         background: var(--brand);
         color: #fff;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-weight: 700;
         flex-shrink: 0;
+        position: relative;
+        z-index: 1;
+        font-weight: 700;
+        font-size: 1.15rem;
+    }
+
+    .step-body {
+        padding-top: 5px;
     }
 
     .step-body h3 {
-        margin: 4px 0 4px;
-        font-size: 1rem;
+        margin: 0 0 8px;
+        font-size: 1.3rem;
     }
 
     .step-body p {
         margin: 0;
         color: var(--muted);
-        font-size: 0.92rem;
-        line-height: 1.5;
+        font-size: 1.02rem;
+        line-height: 1.7;
     }
 
     .step-body a {
         color: var(--brand);
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+    .step-body a:hover {
+        text-decoration: underline;
+    }
+
+    /* 提示 callout */
+    .tip {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+        margin-top: 18px;
+        padding: 14px 16px;
+        border-radius: 12px;
+        background: #eff6ff;
+        border: 1px solid #dbeafe;
+        color: #1e40af;
+        font-size: 0.9rem;
+        line-height: 1.5;
+    }
+
+    .tip svg {
+        width: 18px;
+        height: 18px;
+        flex-shrink: 0;
+        margin-top: 1px;
     }
 </style>
 {% endblock %}
@@ -258,9 +376,12 @@
     </div>
 </section>
 
-<h2 class="section-title">平台功能</h2>
+<section class="section-head">
+    <span class="eyebrow">FEATURES</span>
+    <h2>平台功能</h2>
+</section>
 <div class="feature-grid">
-    <a class="feature card" href="/passengers">
+    <a class="feature" href="/passengers">
         <span class="feature-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                 stroke-linecap="round" stroke-linejoin="round">
@@ -271,9 +392,17 @@
         </span>
         <h3>資料管理（DATAS）</h3>
         <p>瀏覽、搜尋、新增、編輯與刪除 891 筆鐵達尼乘客資料，作為訓練來源。</p>
+        <span class="feature-more">
+            前往管理
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12" />
+                <polyline points="12 5 19 12 12 19" />
+            </svg>
+        </span>
     </a>
 
-    <a class="feature card" href="/ml/train">
+    <a class="feature" href="/ml/train">
         <span class="feature-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                 stroke-linecap="round" stroke-linejoin="round">
@@ -290,9 +419,17 @@
         </span>
         <h3>模型訓練（TRAIN）</h3>
         <p>選擇演算法（LR／隨機森林），自訂超參數，以 GridSearchCV 非同步訓練並顯示最佳參數與指標。</p>
+        <span class="feature-more">
+            開始訓練
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12" />
+                <polyline points="12 5 19 12 12 19" />
+            </svg>
+        </span>
     </a>
 
-    <a class="feature card" href="/ml/models">
+    <a class="feature" href="/ml/models">
         <span class="feature-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                 stroke-linecap="round" stroke-linejoin="round">
@@ -303,9 +440,17 @@
         </span>
         <h3>模型管理（MODELS）</h3>
         <p>檢視所有已訓練模型的指標，設定 active 模型供預測使用，或刪除不需要的模型。</p>
+        <span class="feature-more">
+            管理模型
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12" />
+                <polyline points="12 5 19 12 12 19" />
+            </svg>
+        </span>
     </a>
 
-    <a class="feature card" href="/ml/predict">
+    <a class="feature" href="/ml/predict">
         <span class="feature-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                 stroke-linecap="round" stroke-linejoin="round">
@@ -316,39 +461,46 @@
         </span>
         <h3>生存預測（PREDICT）</h3>
         <p>輸入單筆乘客資料或上傳 CSV 批次預測，取得存活判定與生存機率，並可下載結果。</p>
+        <span class="feature-more">
+            進行預測
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12" />
+                <polyline points="12 5 19 12 12 19" />
+            </svg>
+        </span>
     </a>
 </div>
 
-<h2 class="section-title">使用教學</h2>
-<div class="card">
-    <div class="steps">
-        <div class="step">
-            <div class="step-num">1</div>
-            <div class="step-body">
-                <h3>訓練一個模型</h3>
-                <p>到 <a href="/ml/train">TRAIN</a> 選擇演算法（可選填超參數候選值），按「開始訓練」。
-                    系統會以非同步 job 執行，完成後顯示最佳超參數與測試集指標。</p>
-            </div>
-        </div>
-        <div class="step">
-            <div class="step-num">2</div>
-            <div class="step-body">
-                <h3>設定 active 模型</h3>
-                <p>到 <a href="/ml/models">MODELS</a> 找到剛訓練的模型，點「設為 active」。
-                    預測一律使用 active 模型，同一時間只會有一個。</p>
-            </div>
-        </div>
-        <div class="step">
-            <div class="step-num">3</div>
-            <div class="step-body">
-                <h3>進行預測</h3>
-                <p>到 <a href="/ml/predict">PREDICT</a> 填寫單筆乘客資料按「預測」，
-                    或上傳含對應欄位的 CSV 進行批次預測，結果可下載為含機率的 CSV。</p>
-            </div>
+<section class="section-head">
+    <span class="eyebrow">HOW IT WORKS</span>
+    <h2>使用教學</h2>
+    <!-- <p>三個步驟即可完成一次完整的預測流程。</p> -->
+</section>
+<div class="steps">
+    <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+            <h3>訓練一個模型</h3>
+            <p>到 <a href="/ml/train">TRAIN</a> 選擇演算法（可選填超參數候選值），按「開始訓練」。
+                系統會以非同步 job 執行，完成後顯示最佳超參數與測試集指標。</p>
         </div>
     </div>
-    <p class="muted" style="margin-top:16px;">
-        提示：尚未設定 active 模型時進行預測會被擋下，請先完成步驟 1、2。
-    </p>
+    <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+            <h3>設定 active 模型</h3>
+            <p>到 <a href="/ml/models">MODELS</a> 找到剛訓練的模型，點「設為 active」。
+                預測一律使用 active 模型，同一時間只會有一個。</p>
+        </div>
+    </div>
+    <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+            <h3>進行預測</h3>
+            <p>到 <a href="/ml/predict">PREDICT</a> 填寫單筆乘客資料按「預測」，
+                或上傳含對應欄位的 CSV 進行批次預測，結果可下載為含機率的 CSV。</p>
+        </div>
+    </div>
 </div>
 {% endblock %}
