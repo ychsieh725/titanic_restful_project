@@ -4,25 +4,51 @@
 
 {% block head %}
 <style>
+    /* 滿版 hero：突破置中 main 容器，橫跨整個視窗寬度 */
     .hero {
-        background: linear-gradient(135deg, #eef2ff 0%, var(--panel) 100%);
-        border-radius: 20px;
-        padding: 52px 40px;
+        position: relative;
+        width: 100vw;
+        /* 置中容器的 full-bleed：左右各拉到視窗邊緣，與斷點無關 */
+        margin: -24px calc(50% - 50vw) 32px;
+        min-height: calc(100vh - 58px);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
         text-align: center;
-        margin-bottom: 28px;
+        padding: 48px 28px;
+        overflow: hidden;
+        /* 上淺下深的漸層 scrim 疊在封面圖上，確保白字可讀 */
+        background-image:
+            linear-gradient(180deg, rgba(18, 20, 40, 0.30) 0%, rgba(12, 14, 30, 0.62) 100%),
+            url('{{ url_for('static', filename='hero_page.webp') }}');
+        background-size: cover;
+        background-position: center;
     }
 
     .hero h1 {
-        font-size: 2.1rem;
-        margin: 0 0 14px;
+        font-size: clamp(2.4rem, 6vw, 4.2rem);
+        line-height: 1.25;
+        letter-spacing: 0.03em;
+        font-weight: 800;
+        margin: 0 auto 20px;
+        max-width: 16ch;
+        color: #ffffff;
+        text-shadow: 0 2px 18px rgba(0, 0, 0, 0.35);
+    }
+
+    /* 標題首詞用網站主色藍強調 */
+    .hero-accent {
+        color: var(--brand);
     }
 
     .hero p {
-        color: var(--muted);
-        max-width: 640px;
-        margin: 0 auto 26px;
+        color: rgba(255, 255, 255, 0.88);
+        max-width: 560px;
+        margin: 0 auto 30px;
         font-size: 1.05rem;
         line-height: 1.6;
+        text-shadow: 0 1px 10px rgba(0, 0, 0, 0.35);
     }
 
     .hero-actions {
@@ -137,10 +163,9 @@
 
 {% block content %}
 <section class="hero">
-    <h1>Titanic 生存預測機器學習平台</h1>
+    <h1><span class="hero-accent">解鎖</span>鐵達尼號<br>預測生存的機率</h1>
     <p>
-        在鐵達尼號乘客資料上，完成從<strong>資料管理</strong>、<strong>模型訓練（含超參數調校）</strong>、
-        <strong>模型管理</strong>到<strong>單筆／批次預測</strong>的端到端機器學習流程。
+        從資料管理、模型訓練與超參數調校，到單筆與批次預測的端到端機器學習流程。
         無需寫程式，透過網頁介面即可一鍵訓練並取得生存機率。
     </p>
     <div class="hero-actions">

@@ -2,6 +2,58 @@
 
 {% block title %}預測 — Titanic ML{% endblock %}
 
+{% block head %}
+<style>
+    /* 自訂檔案選擇器：隱藏原生按鈕，改用帶資料夾 icon 的 label */
+    .file-picker {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin: 4px 0 14px;
+    }
+
+    .file-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: #fff;
+        color: var(--fg);
+        font-size: 0.9rem;
+        cursor: pointer;
+    }
+
+    .file-btn:hover {
+        background: var(--panel);
+    }
+
+    .file-btn svg {
+        width: 18px;
+        height: 18px;
+    }
+
+    /* 視覺隱藏原生 input，但保留於版面內以維持 required 驗證可聚焦 */
+    .file-input {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
+        border: 0;
+    }
+
+    .file-name {
+        font-size: 0.9rem;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <h1>生存預測</h1>
 
@@ -125,7 +177,17 @@
     <h2 style="font-size:1.1rem;">CSV 批次預測</h2>
     <p class="muted">上傳含 Pclass, Sex, Name, Ticket, SibSp, Parch, Age, Fare, Cabin, Embarked 欄位的 CSV。</p>
     <form id="batchForm">
-        <input type="file" name="file" accept=".csv" required>
+        <div class="file-picker">
+            <label class="file-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+                </svg>
+                選擇檔案
+                <input type="file" name="file" accept=".csv" required class="file-input">
+            </label>
+            <span class="file-name muted" id="fileName">未選擇任何檔案</span>
+        </div>
         <div>
             <button type="submit">上傳並預測</button>
             <button type="button" id="downloadBtn" disabled>下載結果 CSV</button>
@@ -208,6 +270,15 @@
     const batchHead = document.getElementById("batchHead");
     const batchBody = document.getElementById("batchBody");
     const downloadBtn = document.getElementById("downloadBtn");
+    const fileInput = batchForm.querySelector('input[type="file"]');
+    const fileName = document.getElementById("fileName");
+
+    // 選檔後顯示檔名（原生按鈕已換成資料夾 icon 的 label）
+    fileInput.addEventListener("change", () => {
+        fileName.textContent = fileInput.files.length
+            ? fileInput.files[0].name
+            : "未選擇任何檔案";
+    });
 
     let lastFile = null;
 
@@ -215,7 +286,6 @@
         event.preventDefault();
         resetBatch();
 
-        const fileInput = batchForm.querySelector('input[type="file"]');
         if (!fileInput.files.length) return;
         lastFile = fileInput.files[0];
 
