@@ -1,0 +1,6 @@
+Pclass,Sex,Name,Ticket,SibSp,Parch,Age,Fare,Cabin,Embarked
+3,male,"Braund, Mr. Owen Harris",A/5 21171,1,0,22,7.25,,S
+1,female,"Cumings, Mrs. John Bradley",PC 17599,1,0,38,71.2833,C85,C
+3,female,"Heikkinen, Miss. Laina",STON/O2. 3101282,0,0,26,7.925,,S
+1,male,"Allen, Mr. William Henry",373450,0,0,54,51.8625,E46,S
+3,male,"Palsson, Master. Gosta Leonard",349909,3,1,2,21.075,,S

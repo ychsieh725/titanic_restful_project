@@ -155,7 +155,7 @@ def create_ml_blueprint(
             ), 413
 
         try:
-            passengers = validate_passengers(_csv_to_records(frame))
+            passengers = validate_passengers(_frame_to_records(frame))
         except BatchValidationError as exc:
             rows = [
                 {"row": index, "fields": fields}
@@ -176,18 +176,19 @@ def create_ml_blueprint(
             )
 
         return jsonify(
-            {"results": result.to_dict(orient="records"), "total": len(result)}
+            {"results": _frame_to_records(result), "total": len(result)}
         ), 200
 
     return blueprint
 
 
-def _csv_to_records(frame: pd.DataFrame) -> list[dict]:
-    """將上傳的 CSV DataFrame 正規化為驗證層可用的原生 Python record 清單。
+def _frame_to_records(frame: pd.DataFrame) -> list[dict]:
+    """將 DataFrame 正規化為 JSON/驗證層可用的原生 Python record 清單。
 
-    pandas 會把缺值讀成 NaN、數值欄讀成 numpy 純量；驗證層以 isinstance 檢查
-    原生 int/float/str。此處在資料邊界一次轉換：NaN → None、numpy 純量 → 原生型別，
-    讓服務層維持框架/函式庫無關（CON-4）。
+    pandas 會把缺值讀成 NaN、數值欄讀成 numpy 純量：NaN 直接 jsonify 會產生
+    非法 JSON（`NaN` token），numpy 純量也非驗證層預期的原生型別。此處在資料
+    邊界一次轉換：NaN → None、numpy 純量 → 原生型別，同時服務於 CSV 輸入正規化
+    與批次預測結果序列化，維持框架/函式庫無關（CON-4）。
     """
     cleaned = frame.astype(object).where(pd.notnull(frame), None)
     return [

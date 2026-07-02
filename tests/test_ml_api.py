@@ -8,6 +8,7 @@ blueprint 工廠注入臨時 DB / models 目錄，不碰專案 my_db.db。
 from __future__ import annotations
 
 import io
+import json
 import sqlite3
 import time
 
@@ -440,6 +441,33 @@ def test_batch_valid_returns_200_json(seeded_db) -> None:
     first = body["results"][0]
     assert isinstance(first["survived"], bool)
     assert 0.0 <= first["probability"] <= 1.0
+
+
+def test_batch_empty_cabin_serializes_as_valid_json_null(seeded_db) -> None:
+    """回歸：空 Cabin 不得序列化為非法的 `NaN` token（瀏覽器會拒絕）。
+
+    觸發條件是「同批中 Cabin 有值與空值並存」：pandas 會把空值欄位由 None
+    轉回 NaN，直接 jsonify 便輸出非法的 `NaN` token。Python `json.loads`
+    預設容許 NaN/Infinity，`response.get_json()` 因此會漏掉此 bug；此處改用
+    嚴格解析（parse_constant 一律拋錯）模擬瀏覽器 JSON.parse 行為。
+    """
+    db_path, models_dir = seeded_db
+    _train_and_activate(seeded_db)
+    client = _make_client(db_path, models_dir)
+
+    row_with_cabin = '1,female,0,0,"Doe, Mrs. B",X2,29,80,C85,C'
+    empty_cabin_row = _VALID_ROW  # Cabin 欄留空
+    response = _upload(client, _csv_bytes([row_with_cabin, empty_cabin_row]))
+    assert response.status_code == 200
+
+    raw = response.get_data(as_text=True)
+
+    def _reject_constant(token: str):
+        raise AssertionError(f"回應含非法 JSON token：{token}")
+
+    body = json.loads(raw, parse_constant=_reject_constant)
+    assert body["results"][0]["Cabin"] == "C85"
+    assert body["results"][1]["Cabin"] is None
 
 
 def test_batch_format_csv_returns_attachment(seeded_db) -> None:
