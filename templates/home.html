@@ -196,70 +196,44 @@
         color: inherit;
         background: #fff;
         border: 1px solid var(--line);
-        border-radius: 16px;
-        padding: 24px;
+        border-radius: 22px;
+        padding: 16px 20px 24px;
+        box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
         transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
     }
 
     .feature:hover {
         transform: translateY(-4px);
-        border-color: var(--brand);
-        box-shadow: 0 14px 30px rgba(37, 99, 235, 0.12);
-    }
-
-    .feature .feature-icon {
-        width: 46px;
-        height: 46px;
-        border-radius: 13px;
-        background: #eef2ff;
-        color: var(--brand);
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        margin-bottom: 16px;
-        transition: background 0.2s ease, color 0.2s ease;
-    }
-
-    .feature:hover .feature-icon {
-        background: var(--brand);
-        color: #fff;
-    }
-
-    .feature .feature-icon svg {
-        width: 24px;
-        height: 24px;
+        box-shadow: 0 14px 30px rgba(15, 23, 42, 0.1);
     }
 
     .feature h3 {
-        margin: 0 0 6px;
-        font-size: 1.05rem;
+        margin: 4px 0 8px;
+        font-size: 1.3rem;
     }
 
     .feature p {
-        margin: 0 0 16px;
+        margin: 0 0 20px;
         color: var(--muted);
-        font-size: 0.9rem;
-        line-height: 1.55;
+        font-size: 1rem;
+        line-height: 1.6;
     }
 
     .feature .feature-more {
         margin-top: auto;
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        font-size: 0.85rem;
+        display: block;
+        text-align: center;
+        background: var(--brand);
+        color: #fff;
+        font-size: 0.98rem;
         font-weight: 600;
-        color: var(--brand);
+        padding: 12px 20px;
+        border-radius: 30px;
+        transition: background 0.2s ease;
     }
 
-    .feature .feature-more svg {
-        width: 15px;
-        height: 15px;
-        transition: transform 0.2s ease;
-    }
-
-    .feature:hover .feature-more svg {
-        transform: translateX(3px);
+    .feature:hover .feature-more {
+        background: #1d4ed8;
     }
 
     /* 使用教學：垂直時間軸（圓形打勾徽章 + 連接線） */
@@ -420,93 +394,27 @@
 </section>
 <div class="feature-grid">
     <a class="feature" href="/passengers">
-        <span class="feature-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                stroke-linecap="round" stroke-linejoin="round">
-                <ellipse cx="12" cy="5" rx="9" ry="3" />
-                <path d="M3 5v14a9 3 0 0 0 18 0V5" />
-                <path d="M3 12a9 3 0 0 0 18 0" />
-            </svg>
-        </span>
         <h3>資料管理（DATAS）</h3>
         <p>瀏覽、搜尋、新增、編輯與刪除 891 筆鐵達尼乘客資料，作為訓練來源。</p>
-        <span class="feature-more">
-            前往管理
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                stroke-linecap="round" stroke-linejoin="round">
-                <line x1="5" y1="12" x2="19" y2="12" />
-                <polyline points="12 5 19 12 12 19" />
-            </svg>
-        </span>
+        <span class="feature-more">前往管理</span>
     </a>
 
     <a class="feature" href="/ml/train">
-        <span class="feature-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                stroke-linecap="round" stroke-linejoin="round">
-                <line x1="4" y1="21" x2="4" y2="14" />
-                <line x1="4" y1="10" x2="4" y2="3" />
-                <line x1="12" y1="21" x2="12" y2="12" />
-                <line x1="12" y1="8" x2="12" y2="3" />
-                <line x1="20" y1="21" x2="20" y2="16" />
-                <line x1="20" y1="12" x2="20" y2="3" />
-                <line x1="1" y1="14" x2="7" y2="14" />
-                <line x1="9" y1="8" x2="15" y2="8" />
-                <line x1="17" y1="16" x2="23" y2="16" />
-            </svg>
-        </span>
         <h3>模型訓練（TRAIN）</h3>
         <p>選擇演算法（LR／隨機森林），自訂超參數，以 GridSearchCV 非同步訓練並顯示最佳參數與指標。</p>
-        <span class="feature-more">
-            開始訓練
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                stroke-linecap="round" stroke-linejoin="round">
-                <line x1="5" y1="12" x2="19" y2="12" />
-                <polyline points="12 5 19 12 12 19" />
-            </svg>
-        </span>
+        <span class="feature-more">開始訓練</span>
     </a>
 
     <a class="feature" href="/ml/models">
-        <span class="feature-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                stroke-linecap="round" stroke-linejoin="round">
-                <polygon points="12 2 2 7 12 12 22 7 12 2" />
-                <polyline points="2 17 12 22 22 17" />
-                <polyline points="2 12 12 17 22 12" />
-            </svg>
-        </span>
         <h3>模型管理（MODELS）</h3>
         <p>檢視所有已訓練模型的指標，設定 active 模型供預測使用，或刪除不需要的模型。</p>
-        <span class="feature-more">
-            管理模型
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                stroke-linecap="round" stroke-linejoin="round">
-                <line x1="5" y1="12" x2="19" y2="12" />
-                <polyline points="12 5 19 12 12 19" />
-            </svg>
-        </span>
+        <span class="feature-more">管理模型</span>
     </a>
 
     <a class="feature" href="/ml/predict">
-        <span class="feature-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="10" />
-                <circle cx="12" cy="12" r="6" />
-                <circle cx="12" cy="12" r="2" />
-            </svg>
-        </span>
         <h3>生存預測（PREDICT）</h3>
         <p>輸入單筆乘客資料或上傳 CSV 批次預測，取得存活判定與生存機率，並可下載結果。</p>
-        <span class="feature-more">
-            進行預測
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                stroke-linecap="round" stroke-linejoin="round">
-                <line x1="5" y1="12" x2="19" y2="12" />
-                <polyline points="12 5 19 12 12 19" />
-            </svg>
-        </span>
+        <span class="feature-more">進行預測</span>
     </a>
 </div>
 

@@ -426,8 +426,12 @@
             margin: 0 auto;
             padding: 40px 28px 28px;
             display: grid;
-            grid-template-columns: 1.6fr 1fr 1fr;
+            grid-template-columns: 1fr auto;
             gap: 32px;
+        }
+
+        .footer-col {
+            text-align: right;
         }
 
         .footer-brand .name {
@@ -464,14 +468,6 @@
             color: var(--brand);
         }
 
-        /* 佔位項（內容未定）：非連結、灰字 */
-        .footer-col .soon {
-            display: block;
-            padding: 5px 0;
-            color: var(--muted);
-            font-size: 0.92rem;
-        }
-
         .footer-bottom {
             border-top: 1px solid var(--line);
         }
@@ -493,6 +489,10 @@
             .footer-inner {
                 grid-template-columns: 1fr;
                 gap: 24px;
+            }
+
+            .footer-col {
+                text-align: left;
             }
         }
     </style>
@@ -537,11 +537,6 @@
                 <a href="/ml/train">模型訓練</a>
                 <a href="/ml/models">模型管理</a>
                 <a href="/ml/predict">生存預測</a>
-            </div>
-            <div class="footer-col">
-                <h4>資源</h4>
-                {# 內容未定，先以佔位項預留；之後可換成 GitHub / 文件 / 聯絡等連結 #}
-                <span class="soon">更多內容規劃中…</span>
             </div>
         </div>
         <div class="footer-bottom">
