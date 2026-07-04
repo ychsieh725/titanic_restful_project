@@ -2,11 +2,9 @@
 
 在既有 Flask + SQLite 乘客資料 CRUD 之上，擴充一套端到端機器學習平台：特徵工程、訓練（含超參數搜尋）、非同步 Job、模型 Registry，以及單筆／批次預測。前端頁面透過 **RESTful API + Ajax** 與後端溝通，操作全程無需重新整理頁面。
 
-## 展示影片
+## 展示影片連結
 
-<video src="https://github.com/ychsieh725/titanic_restful_project/raw/main/demo_video.mp4" controls width="100%"></video>
-
-> 若上方播放器未顯示，請點此下載觀看：[demo_video.mp4](https://github.com/ychsieh725/titanic_restful_project/raw/main/demo_video.mp4)
+[youtu.be/PetbbzxTKk8](https://youtu.be/PetbbzxTKk8)
 
 ## 目錄
 
@@ -187,16 +185,6 @@ uv run pytest --cov=src --cov-report=term-missing
 ```
 
 測試涵蓋單元測試（特徵工程、超參數驗證、Job、Registry、訓練、預測驗證）與整合測試（ML REST API、ML 頁面、驗收情境）。
-
-## 成果
-
-![](執行過程的擷圖或說明圖片)
-
-...
-
-[影片名稱或其它標題](你的影片連結)
-
-...
 
 ## 補充資訊
 
