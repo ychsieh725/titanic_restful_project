@@ -23,5 +23,10 @@ models/
 #     既有追蹤檔案需另行 git rm --cached 才會真正移出版控。
 VibeCoding_Workflow_Templates/
 .claude/statusline-go.exe
-docs/
 Titanic_ML_SRS.md
+
+# docs/ 內部文件不進版控，但 README 引用的截圖必須追蹤，
+# 否則 GitHub 上的 README 會破圖。需先排除目錄內容（docs/*）而非目錄本身，
+# 否則 git 不會遞迴進 docs/，! 例外規則將失效。
+docs/*
+!docs/screenshots/
