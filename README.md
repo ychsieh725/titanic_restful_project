@@ -1,5 +1,21 @@
 <div align="center">
 
+# Titanic 生存預測機器學習平台
+
+**一套把「資料管理 → 特徵工程 → 模型訓練 → 模型治理 → 線上預測」完整串起來的 Web ML 平台**
+
+[![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![Flask](https://img.shields.io/badge/Flask-3.1.3-000000?logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
+[![scikit-learn](https://img.shields.io/badge/scikit--learn-1.9.0-F7931E?logo=scikitlearn&logoColor=white)](https://scikit-learn.org/)
+[![pandas](https://img.shields.io/badge/pandas-3.0.3-150458?logo=pandas&logoColor=white)](https://pandas.pydata.org/)
+[![uv](https://img.shields.io/badge/uv-managed-DE5FE9?logo=astral&logoColor=white)](https://docs.astral.sh/uv/)
+[![Tests](https://img.shields.io/badge/tests-144%20passed-success)](#測試)
+[![Coverage](https://img.shields.io/badge/coverage-98%25-brightgreen)](#測試)
+
+[展示影片](https://youtu.be/PetbbzxTKk8) · [快速開始](#快速開始) · [系統架構](#系統架構) · [設計決策](#技術亮點與設計決策) · [API 文件](#api-文件)
+
+</div>
+
 ---
 
 ## 目錄
