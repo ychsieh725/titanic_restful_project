@@ -1,21 +1,5 @@
 <div align="center">
 
-# Titanic 生存預測機器學習平台
-
-**一套把「資料管理 → 特徵工程 → 模型訓練 → 模型治理 → 線上預測」完整串起來的 Web ML 平台**
-
-[![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
-[![Flask](https://img.shields.io/badge/Flask-3.1.3-000000?logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
-[![scikit-learn](https://img.shields.io/badge/scikit--learn-1.9.0-F7931E?logo=scikitlearn&logoColor=white)](https://scikit-learn.org/)
-[![pandas](https://img.shields.io/badge/pandas-3.0.3-150458?logo=pandas&logoColor=white)](https://pandas.pydata.org/)
-[![uv](https://img.shields.io/badge/uv-managed-DE5FE9?logo=astral&logoColor=white)](https://docs.astral.sh/uv/)
-[![Tests](https://img.shields.io/badge/tests-144%20passed-success)](#測試)
-[![Coverage](https://img.shields.io/badge/coverage-98%25-brightgreen)](#測試)
-
-[展示影片](https://youtu.be/PetbbzxTKk8) · [快速開始](#快速開始) · [系統架構](#系統架構) · [設計決策](#技術亮點與設計決策) · [API 文件](#api-文件)
-
-</div>
-
 ---
 
 ## 目錄
@@ -38,9 +22,9 @@
 
 ## 專案簡介
 
-多數 Titanic 專案止步於 Notebook 裡的一次性訓練腳本。本專案的目標不同：**把模型從訓練到上線的完整生命週期，做成一個可操作、可重現、可測試的 Web 平台。**
+**把模型從訓練到上線的完整生命週期，做成一個可操作、可重現、可測試的 Web 平台。**
 
-具體來說，使用者可以在瀏覽器上完成以下流程，全程不需重新整理頁面：
+使用者可以在瀏覽器上完成以下流程，全程不需重新整理頁面：
 
 1. 管理乘客資料（CRUD、分頁、搜尋）
 2. 選擇演算法、自訂超參數候選值，送出訓練
@@ -48,20 +32,18 @@
 4. 訓練完成後模型自動登錄至 Registry，比較指標並切換啟用中模型
 5. 以啟用中的模型做單筆預測或 CSV 批次預測，並下載結果
 
-工程上的重點在於三件事：**訓練與預測共用同一條序列化 Pipeline**（避免 training/serving skew）、**服務層與 Web 框架完全解耦**（`src/ml/` 不 import 任何 Flask 物件）、以及 **98% 測試覆蓋率下的可重現訓練結果**。
-
 ---
 
 ## 核心功能
 
-| 模組 | 功能 | 說明 |
-| :--- | :--- | :--- |
-| **資料管理** | 乘客 CRUD | 分頁、姓名搜尋、新增／編輯／刪除，全部走 REST API + Ajax |
-| **特徵工程** | 衍生特徵與補值 | Title 萃取、FamilySize／IsAlone 衍生、分組中位數補值，封裝為可序列化 Pipeline |
-| **模型訓練** | 超參數搜尋 | Logistic Regression／Random Forest，`GridSearchCV` 5-fold 交叉驗證，候選值可在網頁自訂 |
-| **非同步 Job** | 背景訓練 | 送出訓練立即回傳 `job_id`（HTTP 202），前端輪詢狀態，不阻塞請求 |
-| **模型 Registry** | 模型治理 | joblib 存 Pipeline、metadata 存 SQLite，支援清單／啟用切換／刪除，同時至多一個 active |
-| **線上預測** | 單筆／批次 | 表單單筆預測回傳生存機率；CSV 批次預測支援結果下載 |
+| 模組                    | 功能           | 說明                                                                                     |
+| :---------------------- | :------------- | :--------------------------------------------------------------------------------------- |
+| **資料管理**      | 乘客 CRUD      | 分頁、姓名搜尋、新增／編輯／刪除，全部走 REST API + Ajax                                 |
+| **特徵工程**      | 衍生特徵與補值 | Title 萃取、FamilySize／IsAlone 衍生、分組中位數補值，封裝為可序列化 Pipeline            |
+| **模型訓練**      | 超參數搜尋     | Logistic Regression／Random Forest，`GridSearchCV` 5-fold 交叉驗證，候選值可在網頁自訂 |
+| **非同步 Job**    | 背景訓練       | 送出訓練立即回傳`job_id`（HTTP 202），前端輪詢狀態，不阻塞請求                         |
+| **模型 Registry** | 模型治理       | joblib 存 Pipeline、metadata 存 SQLite，支援清單／啟用切換／刪除，同時至多一個 active    |
+| **線上預測**      | 單筆／批次     | 表單單筆預測回傳生存機率；CSV 批次預測支援結果下載                                       |
 
 ---
 
@@ -166,7 +148,7 @@ sequenceDiagram
     end
 ```
 
-### 預測流程（共用管線）
+### 預測流程
 
 預測不重寫任何前處理，而是載回訓練時序列化的整條 Pipeline，確保線上線下行為一致。
 
@@ -185,14 +167,20 @@ flowchart LR
 
 ## 技術亮點與設計決策
 
-### 1. 訓練與預測共用同一條序列化 Pipeline
+### 1. 訓練和預測用同一套資料處理流程
 
-**問題**：ML 系統最常見的線上事故是 training/serving skew — 訓練時用 pandas 算了一套補值，預測時在 API 層又寫了一套，兩邊統計量不同導致線上表現遠低於離線指標。
+**問題**
 
-**做法**：把補值與衍生特徵封裝進自訂 transformer `TitanicFeatureEngineer`，**統計量只在 `fit` 階段學習並存於 estimator 內，`transform` 僅套用既學數值**，不在預測當下對輸入重算。整條 `Pipeline(前處理 + 分類器)` 以 joblib 序列化；預測端一律載回同一物件呼叫 `predict_proba`，不存在第二套前處理程式碼。
+機器學習系統最常見的線上事故，是同一份資料在訓練和預測時被處理成不同的樣子。以「年齡空白就補中位數」為例：訓練時是用全體資料算出中位數，但預測時只有一筆資料，臨時算出來的中位數就是那筆資料自己的年齡。兩邊補的值不一樣，模型看到的東西自然不同，線上準確率就會比訓練時看到的數字差一截。
+
+**解決方法**
+
+把補值和衍生欄位的邏輯包成一個資料處理元件 `TitanicFeatureEngineer`，並且規定：**所有統計量（各類頭銜的年齡中位數、各艙等的票價中位數、登船港口的眾數）只在訓練時計算一次並存起來，預測時直接拿來用，不重算。**
+
+前處理和分類器再一起打包成一條 Pipeline，用 joblib 整個存成檔案。預測時載回同一個檔案直接呼叫 `predict_proba`。
 
 ```python
-# src/ml/features.py — fit 學統計量，transform 只套用
+# src/ml/features.py — 訓練時把統計量算好存起來，預測時只拿來套用
 def fit(self, X, y=None):
     self.age_median_by_title_ = age.groupby(engineered["Title"]).median().to_dict()
     self.fare_median_by_pclass_ = fare.groupby(engineered["Pclass"]).median().to_dict()
@@ -200,79 +188,152 @@ def fit(self, X, y=None):
     return self
 ```
 
-**額外處理**：類別編碼使用 `OneHotEncoder(handle_unknown="ignore")`，預測時遇到訓練未見過的類別不會拋錯。
+**結果**
 
-### 2. 服務層與 Web 框架解耦
+預測端完全沒有前處理程式碼，也就沒有「兩邊寫得不一樣」的可能。之後換模型、加特徵，預測端一行都不用改。另外類別欄位的編碼設定為 `handle_unknown="ignore"`，預測時遇到訓練時沒出現過的類別（例如新的頭銜）也不會直接壞掉。
 
-`src/ml/` 全部為純 Python，**不 import 任何 Flask 物件**。展示層 `src/web/` 只做三件事：輸入驗證、HTTP 狀態碼對應、JSON 序列化；業務邏輯一律委派服務層。
+### 2. 機器學習程式碼不綁 Flask
 
-好處是服務層可獨立做單元測試（不需要 Flask test client），也能在未來換成 FastAPI 或 CLI 而不必改動任何 ML 程式碼。網域例外（如 `NoActiveModelError`）由服務層拋出，展示層負責翻譯成適當狀態碼。
+**問題**
 
-### 3. 非同步 Job 採不可變狀態轉移
+如果訓練、預測的邏輯直接寫在 Flask 的路由函式裡，會有兩個後果：測試時得先啟動一個假的 Web 伺服器才能驗證模型邏輯；未來想換框架或改成排程腳本執行，等於整包重寫。
 
-`JobStore` 以 `threading.Lock` 保護狀態，且每次轉移都用 `dataclasses.replace` **產生新的 Job 快照取代舊值**，而非就地修改欄位。這樣讀取端永遠拿到一致的完整快照，不會讀到「狀態已改成 done、但 metrics 還沒寫入」的中間態。
+**解決方法**
 
-單一 Job 失敗只標記為 `failed` 並記錄錯誤訊息，不向外拋出，避免單次訓練失敗影響服務整體。
+分成兩層，界線畫清楚：
 
-### 4. 超參數防呆：不讓不合理輸入流進 GridSearchCV
+- `src/ml/`（服務層）：純 Python，**完全不 import Flask**，負責特徵、訓練、模型管理、預測
+- `src/web/`（展示層）：只做三件事 — 檢查輸入、決定 HTTP 狀態碼、把結果轉成 JSON
 
-開放使用者自訂超參數的代價是「笛卡兒積爆炸」與非法值。`config.HYPERPARAM_SPECS` 集中定義每個參數的型別與安全範圍，並限制單一參數候選數（20）與**組合總數上限（200）**：
+服務層遇到問題時丟出自己定義的錯誤（例如「沒有啟用中的模型」`NoActiveModelError`），由展示層決定要回哪個狀態碼。
 
-| 檢查項 | 行為 |
-| :--- | :--- |
-| 型別錯誤（如 `C="abc"`） | 422，回傳欄位層級錯誤明細 |
-| 超出範圍（如 `n_estimators=99999`） | 422 |
-| 組合數 > 200 | 422，避免訓練時間失控 |
-| 未知演算法 | 422，錯誤訊息列出可用選項 |
+**結果**
 
-驗證發生在建立 Job **之前**，因此使用者拿到的是同步的明確錯誤，而不是非同步的 failed 狀態。
+服務層的測試不需要啟動 Flask，直接呼叫函式即可，這也是覆蓋率能做到 98% 的主因。未來要換成 FastAPI 或改成命令列工具，只需要重寫 `src/web/`，機器學習的部分一行都不用動。
 
-### 5. 用資料結構取代應用層判斷
+### 3. 訓練不卡住畫面
 
-「同時至多一個 active 模型」不是靠應用層的 if 檢查，而是由 **SQLite partial unique index** 保證：
+**問題**
+
+Random Forest 的預設參數組合有 108 組，每組還要做 5 次交叉驗證，實測要跑 15.8 秒。如果讓網頁請求一直等到訓練結束，使用者只會看到瀏覽器轉圈圈，久一點還會直接逾時。
+
+**解決方法**
+
+送出訓練後，後端立刻建立一個工作編號並開背景執行緒去跑，馬上回傳 `202 Accepted` 和 `job_id`，前端再定時查詢進度。
+
+工作狀態的更新有兩個細節：一是用鎖保護，避免背景執行緒寫到一半被讀走；二是**每次更新都產生一份新的狀態，而不是改舊的那一份**，所以查詢的人拿到的一定是完整的狀態，不會看到「狀態已經寫成完成、但訓練指標還沒填進去」的半套資料。
+
+**結果**
+
+送出訓練後畫面立刻有回應，訓練進度可以持續追蹤。單一次訓練失敗只會把該筆工作標記為 `failed` 並記下錯誤原因，不會影響其他訓練或讓整個服務掛掉。
+
+### 4. 擋掉不合理的超參數
+
+**問題**
+
+開放使用者自己填超參數候選值，會遇到兩種麻煩：一是填錯型別或誇張的數值（例如樹的數量填 99999），訓練跑到一半才失敗；二是候選值填太多，組合數相乘後暴增（4 個參數各填 10 個值就是 10000 組），訓練時間直接失控。
+
+**解決方法**
+
+在設定檔集中定義每個參數的型別與合理範圍，並限制單一參數最多 20 個候選值、所有參數的組合總數最多 200 組。任何一項不通過就回傳 `422` 並附上是哪個欄位有問題：
+
+| 檢查項                               | 行為                      |
+| :----------------------------------- | :------------------------ |
+| 型別錯誤（如`C="abc"`）            | 422，回傳欄位層級錯誤明細 |
+| 超出範圍（如`n_estimators=99999`） | 422                       |
+| 組合數 > 200                         | 422，避免訓練時間失控     |
+| 未知演算法                           | 422，錯誤訊息列出可用選項 |
+
+**結果**
+
+驗證在建立訓練工作**之前**就完成，所以使用者是在送出當下立刻收到明確的錯誤訊息，而不是等了 15 秒才看到一個失敗的工作。訓練時間也因此有可預期的上限。
+
+### 5. 「同時只有一個啟用中模型」交給資料庫保證
+
+**問題**
+
+預測時必須明確知道要用哪個模型。如果靠程式碼判斷「設定新模型前先把舊的取消」，只要有任何一條路徑忘了做這件事（例如之後多寫一個匯入模型的功能），就會出現兩個啟用中的模型，預測結果變得看運氣。
+
+**解決方法**
+
+把這條規則寫進資料庫，用**帶條件的唯一索引**：只對「啟用中」的資料列要求唯一，等於從資料結構上限制最多只能有一筆。
 
 ```sql
 CREATE UNIQUE INDEX ux_ml_model_active ON ml_model (is_active) WHERE is_active = 1;
 ```
 
-切換 active 時在單一交易內先清除舊 active 再設定新值，避免瞬間兩筆同為 active 而違反索引約束。約束寫在資料層，任何寫入路徑都繞不過去。
+切換時在同一個交易裡先取消舊的、再設定新的，避免中間出現兩筆同時啟用而違反索引。
 
-### 6. 模型可追溯性
+**結果**
 
-每個登錄模型都記錄 `data_hash`（訓練資料內容的 SHA-256）、`feature_list`（編碼後模型實際消費的欄位）、`training_rows`、`training_duration_sec` 與完整超參數。當線上預測結果異常時，可回溯該模型究竟是用哪一份資料、哪些特徵訓練出來的。
+不論從哪個功能寫入資料，都不可能產生兩個啟用中的模型 — 違反就直接寫入失敗。這條規則不需要在每個新功能裡重寫一次檢查。
 
-### 7. 錯誤處理不裸奔 500
+### 6. 每個模型都查得出來歷
 
-所有可預期的失敗都有明確狀態碼與訊息，不回傳未處理的 500：
+**問題**
 
-| 狀況 | 狀態碼 | 回應 |
-| :--- | :---: | :--- |
-| 缺少必要欄位 / CSV 解析失敗 | 400 | 明確指出缺什麼 |
-| 找不到 job／模型 | 404 | 附上查詢的 ID |
-| 無 active 模型時預測 | 409 | 提示先完成訓練並啟用模型 |
-| 資料列數超過 10,000 | 413 | 提示分批上傳 |
-| 輸入驗證／超參數驗證失敗 | 422 | 回傳欄位層級（批次為列層級）錯誤明細 |
+累積多個模型後，如果只存準確率，之後發現某個模型預測結果怪怪的，會無從查起：它是用哪一份資料訓練的？用了哪些欄位？參數是什麼？
 
-### 8. 安全性
+**解決方法**
 
-所有 SQL 一律使用**參數化查詢**，不做字串拼接；使用者輸入在系統邊界即完成驗證（型別、範圍、長度、列數上限），不信任任何外部資料。
+每次訓練完成，除了模型檔本身，另外記錄訓練資料內容的 SHA-256 雜湊值、模型實際使用的完整欄位清單、訓練筆數、訓練耗時，以及最佳超參數。
+
+**結果**
+
+任何一個模型都可以回溯它的來歷。資料改過之後重新訓練，雜湊值會不同，可以直接分辨兩個模型是不是用同一份資料訓練出來的。
+
+### 7. 錯誤訊息講清楚，不丟 500
+
+**問題**
+
+後端如果把所有錯誤都變成 `500 Internal Server Error`，前端無法分辨「使用者填錯了」和「伺服器壞了」，只能顯示一句籠統的「發生錯誤」，使用者不知道該怎麼修正。
+
+**解決方法**
+
+把可以預期的失敗都對應到明確的狀態碼與訊息：
+
+| 狀況                        | 狀態碼 | 回應                                 |
+| :-------------------------- | :----: | :----------------------------------- |
+| 缺少必要欄位 / CSV 解析失敗 |  400  | 明確指出缺什麼                       |
+| 找不到 job／模型            |  404  | 附上查詢的 ID                        |
+| 無 active 模型時預測        |  409  | 提示先完成訓練並啟用模型             |
+| 資料列數超過 10,000         |  413  | 提示分批上傳                         |
+| 輸入驗證／超參數驗證失敗    |  422  | 回傳欄位層級（批次為列層級）錯誤明細 |
+
+**結果**
+
+前端可以依狀態碼決定要怎麼提示：`422` 直接把錯誤標在對應的欄位上，`409` 則引導使用者先去啟用模型。批次預測的驗證錯誤還會標明是第幾列出問題，使用者不必自己在上千列的 CSV 裡慢慢找。
+
+### 8. 防止 SQL 注入
+
+**問題**
+
+如果把使用者輸入的內容直接接進 SQL 字串（例如姓名搜尋），有心人可以在輸入框裡塞入 SQL 語法，讀走或刪掉整張資料表。
+
+**解決方法**
+
+所有 SQL 一律使用**參數化查詢**，把值當成參數傳給資料庫，而不是拼接成字串的一部分。使用者輸入則在進入系統的第一關就檢查完畢：型別、數值範圍、字串長度、CSV 列數上限。
+
+**結果**
+
+輸入的內容一律被當作資料處理，不會被當成指令執行。不合規格的輸入在邊界就被擋下，不會流進後面的訓練或預測流程。
 
 ---
 
 ## 技術棧
 
-| 層 | 技術 | 版本 |
-| :--- | :--- | :--- |
-| 環境／套件管理 | uv（`.venv` + `pyproject.toml` + `uv.lock`） | — |
-| 語言 | Python | 3.11+（開發環境 3.12.10） |
-| 展示層 | Flask + Jinja2 + REST API | 3.1.3 |
-| 前端互動 | 原生 JavaScript（`fetch` / Ajax） | — |
-| 機器學習 | scikit-learn（Pipeline、ColumnTransformer、GridSearchCV） | 1.9.0 |
-| 資料處理 | pandas / numpy | 3.0.3 / 2.5.0 |
-| 模型序列化 | joblib | 1.5.3 |
-| 非同步處理 | threading（標準庫） | — |
-| 資料庫 | SQLite（標準庫 sqlite3） | — |
-| 測試 | pytest + pytest-cov | 9.1.1 / 7.1.0 |
+| 層             | 技術                                                      | 版本                      |
+| :------------- | :-------------------------------------------------------- | :------------------------ |
+| 環境／套件管理 | uv（`.venv` + `pyproject.toml` + `uv.lock`）        | —                        |
+| 語言           | Python                                                    | 3.11+（開發環境 3.12.10） |
+| 展示層         | Flask + Jinja2 + REST API                                 | 3.1.3                     |
+| 前端互動       | 原生 JavaScript（`fetch` / Ajax）                       | —                        |
+| 機器學習       | scikit-learn（Pipeline、ColumnTransformer、GridSearchCV） | 1.9.0                     |
+| 資料處理       | pandas / numpy                                            | 3.0.3 / 2.5.0             |
+| 模型序列化     | joblib                                                    | 1.5.3                     |
+| 非同步處理     | threading（標準庫）                                       | —                        |
+| 資料庫         | SQLite（標準庫 sqlite3）                                  | —                        |
+| 測試           | pytest + pytest-cov                                       | 9.1.1 / 7.1.0             |
 
 ---
 
@@ -309,13 +370,13 @@ uv run python app.py
 
 ### 頁面路徑
 
-| 頁面 | 路徑 |
-| :--- | :--- |
-| 首頁 | `/` |
+| 頁面         | 路徑            |
+| :----------- | :-------------- |
+| 首頁         | `/`           |
 | 乘客資料管理 | `/passengers` |
-| 模型訓練 | `/ml/train` |
-| 模型管理 | `/ml/models` |
-| 生存預測 | `/ml/predict` |
+| 模型訓練     | `/ml/train`   |
+| 模型管理     | `/ml/models`  |
+| 生存預測     | `/ml/predict` |
 
 ### 首次使用建議流程
 
@@ -335,25 +396,25 @@ uv run python app.py
 
 ### 乘客資料 CRUD
 
-| 方法 | 路徑 | 說明 |
-| :--- | :--- | :--- |
-| `GET` | `/api/passengers?page=&per_page=&search=` | 分頁查詢，可依姓名搜尋 |
-| `GET` | `/api/passengers/<id>` | 取得單筆乘客 |
-| `POST` | `/api/passengers` | 新增乘客 |
-| `PUT` | `/api/passengers/<id>` | 更新乘客 |
-| `DELETE` | `/api/passengers/<id>` | 刪除乘客 |
+| 方法       | 路徑                                        | 說明                   |
+| :--------- | :------------------------------------------ | :--------------------- |
+| `GET`    | `/api/passengers?page=&per_page=&search=` | 分頁查詢，可依姓名搜尋 |
+| `GET`    | `/api/passengers/<id>`                    | 取得單筆乘客           |
+| `POST`   | `/api/passengers`                         | 新增乘客               |
+| `PUT`    | `/api/passengers/<id>`                    | 更新乘客               |
+| `DELETE` | `/api/passengers/<id>`                    | 刪除乘客               |
 
 ### 機器學習平台
 
-| 方法 | 路徑 | 成功狀態碼 | 說明 |
-| :--- | :--- | :---: | :--- |
-| `POST` | `/api/ml/train` | 202 | 送出訓練（`algorithm` + 可選 `hyperparameters`），立即回傳 `job_id` |
-| `GET` | `/api/ml/train/status/<job_id>` | 200 | 查詢 Job 狀態；完成時附最佳超參數與指標 |
-| `GET` | `/api/ml/models` | 200 | 列出所有已登錄模型 |
-| `POST` | `/api/ml/models/<id>/activate` | 200 | 將指定模型設為 active |
-| `DELETE` | `/api/ml/models/<id>` | 200 | 刪除模型（含 joblib 檔） |
-| `POST` | `/api/ml/predict` | 200 | 單筆預測 |
-| `POST` | `/api/ml/predict/batch` | 200 | CSV 批次預測（表單欄位 `file`；加 `?format=csv` 直接下載結果） |
+| 方法       | 路徑                              | 成功狀態碼 | 說明                                                                      |
+| :--------- | :-------------------------------- | :--------: | :------------------------------------------------------------------------ |
+| `POST`   | `/api/ml/train`                 |    202    | 送出訓練（`algorithm` + 可選 `hyperparameters`），立即回傳 `job_id` |
+| `GET`    | `/api/ml/train/status/<job_id>` |    200    | 查詢 Job 狀態；完成時附最佳超參數與指標                                   |
+| `GET`    | `/api/ml/models`                |    200    | 列出所有已登錄模型                                                        |
+| `POST`   | `/api/ml/models/<id>/activate`  |    200    | 將指定模型設為 active                                                     |
+| `DELETE` | `/api/ml/models/<id>`           |    200    | 刪除模型（含 joblib 檔）                                                  |
+| `POST`   | `/api/ml/predict`               |    200    | 單筆預測                                                                  |
+| `POST`   | `/api/ml/predict/batch`         |    200    | CSV 批次預測（表單欄位`file`；加 `?format=csv` 直接下載結果）         |
 
 ### 範例：送出訓練並輪詢結果
 
@@ -394,19 +455,19 @@ curl -X POST http://127.0.0.1:5000/api/ml/predict \
 
 **衍生特徵**
 
-| 特徵 | 規則 |
-| :--- | :--- |
-| `Title` | 以正則 `,\s*([^\.]+)\.` 自 `Name` 萃取頭銜；`Mlle`/`Ms` → `Miss`、`Mme` → `Mrs`，其餘罕見頭銜歸為 `Rare` |
-| `FamilySize` | `SibSp + Parch + 1` |
-| `IsAlone` | `FamilySize == 1` |
+| 特徵           | 規則                                                                                                                      |
+| :------------- | :------------------------------------------------------------------------------------------------------------------------ |
+| `Title`      | 以正則`,\s*([^\.]+)\.` 自 `Name` 萃取頭銜；`Mlle`/`Ms` → `Miss`、`Mme` → `Mrs`，其餘罕見頭銜歸為 `Rare` |
+| `FamilySize` | `SibSp + Parch + 1`                                                                                                     |
+| `IsAlone`    | `FamilySize == 1`                                                                                                       |
 
 **缺值補值**（統計量僅於 `fit` 學習）
 
-| 欄位 | 策略 |
-| :--- | :--- |
-| `Age` | 依 `Title` 分組中位數，全域中位數為 fallback |
-| `Fare` | 依 `Pclass` 分組中位數，全域中位數為 fallback |
-| `Embarked` | 眾數 |
+| 欄位         | 策略                                           |
+| :----------- | :--------------------------------------------- |
+| `Age`      | 依`Title` 分組中位數，全域中位數為 fallback  |
+| `Fare`     | 依`Pclass` 分組中位數，全域中位數為 fallback |
+| `Embarked` | 眾數                                           |
 
 **編碼**
 
@@ -415,19 +476,19 @@ curl -X POST http://127.0.0.1:5000/api/ml/predict \
 
 ### 訓練設定
 
-| 項目 | 值 |
-| :--- | :--- |
+| 項目     | 值                                                                                            |
+| :------- | :-------------------------------------------------------------------------------------------- |
 | 資料切分 | `train_test_split(test_size=0.2, stratify=y, random_state=42)` → 訓練 712 筆 / 測試 179 筆 |
-| 交叉驗證 | `GridSearchCV(cv=5)`，於訓練集上執行 |
-| 評估 | 於 held-out 測試集計算 Accuracy / Precision / Recall / F1 / ROC-AUC / 混淆矩陣 |
-| 可重現性 | `random_state=42` 全程固定 |
+| 交叉驗證 | `GridSearchCV(cv=5)`，於訓練集上執行                                                        |
+| 評估     | 於 held-out 測試集計算 Accuracy / Precision / Recall / F1 / ROC-AUC / 混淆矩陣                |
+| 可重現性 | `random_state=42` 全程固定                                                                  |
 
 ### 預設超參數格點
 
-| 演算法 | 格點 | 組合數 |
-| :--- | :--- | :---: |
-| Logistic Regression | `C: [0.01, 0.1, 1, 10]`、`penalty: [l1, l2]`、`solver: [liblinear]` | 8 |
-| Random Forest | `n_estimators: [100, 300, 500]`、`max_depth: [None, 5, 10, 20]`、`min_samples_split: [2, 5, 10]`、`min_samples_leaf: [1, 2, 4]` | 108 |
+| 演算法              | 格點                                                                                                                                    | 組合數 |
+| :------------------ | :-------------------------------------------------------------------------------------------------------------------------------------- | :----: |
+| Logistic Regression | `C: [0.01, 0.1, 1, 10]`、`penalty: [l1, l2]`、`solver: [liblinear]`                                                               |   8   |
+| Random Forest       | `n_estimators: [100, 300, 500]`、`max_depth: [None, 5, 10, 20]`、`min_samples_split: [2, 5, 10]`、`min_samples_leaf: [1, 2, 4]` |  108  |
 
 使用者可於訓練頁面自訂候選值，後端依 `HYPERPARAM_SPECS` 驗證型別與範圍，並限制組合總數上限 200。
 
@@ -437,17 +498,17 @@ curl -X POST http://127.0.0.1:5000/api/ml/predict \
 
 資料集 `titanic.csv`（891 筆，生還 342 筆），使用預設格點，於本機執行的結果：
 
-| 演算法 | 最佳超參數 | CV Accuracy | Test Accuracy | Precision | Recall | F1 | ROC-AUC | 訓練耗時 |
-| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Logistic Regression** | `C=1`, `penalty=l2`, `solver=liblinear` | 0.8203 | **0.8547** | 0.8413 | 0.7681 | 0.8030 | **0.8805** | 2.4 s |
-| **Random Forest** | `n_estimators=300`, `max_depth=10`, `min_samples_split=5`, `min_samples_leaf=2` | **0.8273** | 0.8156 | 0.8000 | 0.6957 | 0.7442 | 0.8534 | 15.8 s |
+| 演算法                        | 最佳超參數                                                                              |   CV Accuracy   |  Test Accuracy  | Precision | Recall |   F1   |     ROC-AUC     | 訓練耗時 |
+| :---------------------------- | :-------------------------------------------------------------------------------------- | :--------------: | :--------------: | :-------: | :----: | :----: | :--------------: | :------: |
+| **Logistic Regression** | `C=1`, `penalty=l2`, `solver=liblinear`                                           |      0.8203      | **0.8547** |  0.8413  | 0.7681 | 0.8030 | **0.8805** |  2.4 s  |
+| **Random Forest**       | `n_estimators=300`, `max_depth=10`, `min_samples_split=5`, `min_samples_leaf=2` | **0.8273** |      0.8156      |  0.8000  | 0.6957 | 0.7442 |      0.8534      |  15.8 s  |
 
 **混淆矩陣**（測試集 179 筆，格式 `[[TN, FP], [FN, TP]]`）
 
-| 演算法 | 混淆矩陣 |
-| :--- | :--- |
+| 演算法              | 混淆矩陣                  |
+| :------------------ | :------------------------ |
 | Logistic Regression | `[[100, 10], [16, 53]]` |
-| Random Forest | `[[98, 12], [21, 48]]` |
+| Random Forest       | `[[98, 12], [21, 48]]`  |
 
 **觀察**：Random Forest 的交叉驗證分數略高（0.8273 vs 0.8203），但在 held-out 測試集上 Logistic Regression 的各項指標反而較優。這是資料量有限（891 筆）時常見的模型變異，不足以斷言任一模型明顯較佳；以泛化表現與訓練成本（2.4s vs 15.8s）綜合考量，Logistic Regression 在此資料集上是更務實的選擇。
 
@@ -467,14 +528,14 @@ uv run pytest --cov=src --cov-report=term-missing
 
 **測試結果：144 passed，服務層與展示層整體覆蓋率 98%**
 
-| 模組 | 覆蓋率 | 模組 | 覆蓋率 |
-| :--- | :---: | :--- | :---: |
-| `src/ml/features.py` | 100% | `src/ml/registry.py` | 100% |
-| `src/ml/training.py` | 100% | `src/ml/jobs.py` | 100% |
-| `src/ml/prediction.py` | 100% | `src/ml/validation.py` | 100% |
-| `src/ml/schema.py` | 100% | `src/ml/types.py` | 100% |
-| `src/web/ml_pages.py` | 100% | `src/web/ml_api.py` | 98% |
-| `src/ml/config.py` | 95% | `src/ml/hyperparams.py` | 90% |
+| 模組                     | 覆蓋率 | 模組                      | 覆蓋率 |
+| :----------------------- | :----: | :------------------------ | :----: |
+| `src/ml/features.py`   |  100%  | `src/ml/registry.py`    |  100%  |
+| `src/ml/training.py`   |  100%  | `src/ml/jobs.py`        |  100%  |
+| `src/ml/prediction.py` |  100%  | `src/ml/validation.py`  |  100%  |
+| `src/ml/schema.py`     |  100%  | `src/ml/types.py`       |  100%  |
+| `src/web/ml_pages.py`  |  100%  | `src/web/ml_api.py`     |  98%  |
+| `src/ml/config.py`     |  95%  | `src/ml/hyperparams.py` |  90%  |
 
 測試範圍涵蓋：
 
@@ -515,11 +576,11 @@ titanic_restful_project/
 
 ### 資料模型
 
-| 表 | 用途 | 關鍵欄位 |
-| :--- | :--- | :--- |
-| `titanic` | 乘客資料 | `PassengerId`, `Survived`, `Pclass`, `Name`, `Sex`, `Age`, `SibSp`, `Parch`, `Ticket`, `Fare`, `Cabin`, `Embarked` |
-| `ml_model` | 模型登錄 | `model_uid`, `algorithm`, `hyperparameters`, `best_cv_score`, `metrics`, `feature_list`, `data_hash`, `file_path`, `is_active` |
-| `train_job` | 訓練工作 | `job_id`, `status`, `algorithm`, `progress`, `result_model_uid`, `error_message` |
+| 表            | 用途     | 關鍵欄位                                                                                                                                         |
+| :------------ | :------- | :----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `titanic`   | 乘客資料 | `PassengerId`, `Survived`, `Pclass`, `Name`, `Sex`, `Age`, `SibSp`, `Parch`, `Ticket`, `Fare`, `Cabin`, `Embarked`       |
+| `ml_model`  | 模型登錄 | `model_uid`, `algorithm`, `hyperparameters`, `best_cv_score`, `metrics`, `feature_list`, `data_hash`, `file_path`, `is_active` |
+| `train_job` | 訓練工作 | `job_id`, `status`, `algorithm`, `progress`, `result_model_uid`, `error_message`                                                     |
 
 ---
 
